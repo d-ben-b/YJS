@@ -1,30 +1,40 @@
 <template>
   <nav class="sidebar fixed-top">
     <div class="sidebar-brand">
-      <a href="#" class="head">YJS </a>
-      <a href="#" class="content">employee training</a>
+      <router-link to="/" class="head">YJS </router-link>
+      <router-link to="/" class="content">employee training</router-link>
     </div>
     <ul class="sidebar-nav">
       <li class="nav-item">
-        <a href="#">首頁</a>
+        <router-link to="/" class="nav-link">首頁</router-link>
       </li>
       <li class="nav-item">
-        <a href="#">人員與權限管理</a>
+        <router-link to="/permissions" class="nav-link"
+          >人員與權限管理</router-link
+        >
       </li>
       <li class="nav-item">
-        <a href="#">教育訓練內容管理</a>
+        <router-link to="/training-content" class="nav-link"
+          >教育訓練內容管理</router-link
+        >
       </li>
       <li class="nav-item">
-        <a href="#">規劃模組</a>
+        <router-link to="/planning-module" class="nav-link"
+          >規劃模組</router-link
+        >
       </li>
       <li class="nav-item">
-        <a href="#">執行模組</a>
+        <router-link to="/execution-module" class="nav-link"
+          >執行模組</router-link
+        >
       </li>
       <li class="nav-item">
-        <a href="#">查核模組</a>
+        <router-link to="/audit-module" class="nav-link">查核模組</router-link>
       </li>
       <li class="nav-item">
-        <a href="#">分析模組</a>
+        <router-link to="/analysis-module" class="nav-link"
+          >分析模組</router-link
+        >
       </li>
     </ul>
   </nav>
@@ -83,16 +93,19 @@
     list-style-type: none;
     display: flex;
     flex-direction: column;
-    flex-wrap: wrap;
     margin-top: 20px;
     padding: 0;
     width: inherit;
   }
 
+  .nav-item {
+    height: 47px;
+  }
+
   .nav-item a {
     color: #333;
     padding: 10px;
-    margin: 0 5px;
+    margin: 5px 5px;
     width: inherit;
     font-size: 24px;
     font-family: Inter;
@@ -104,6 +117,16 @@
   }
 
   .nav-item:hover {
+    background-color: #ddd;
+  }
+
+  /* 可以為 .nav-link 加上額外的樣式 */
+  .nav-link {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .nav-link.active {
     background-color: #ddd;
   }
 </style>

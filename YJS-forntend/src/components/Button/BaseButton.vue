@@ -41,14 +41,20 @@
     color: white;
   }
 
-  .btn:disabled {
+  .btn.disabled {
     opacity: 0.5;
     transform: 0;
+    color: white;
+    background-color: #d9d9d9;
   }
 
   .btn:hover {
     cursor: pointer;
     transform: scale(1.1);
     transition: 1s;
+  }
+  .disabled:hover {
+    cursor: not-allowed;
+    transform: none;
   }
 </style>

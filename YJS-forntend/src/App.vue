@@ -1,33 +1,43 @@
 <template>
-  <!-- <side-bar></side-bar> -->
-  <div class="main-container">
-    <nav-bar></nav-bar>
-    <side-bar></side-bar>
-    <content-manager></content-manager>
+  <div id="app">
+    <NavBar />
+    <SideBar />
+    <router-view />
   </div>
 </template>
 
-<script></script>
+<script>
+  import NavBar from "@/components/NavBar.vue";
+  import SideBar from "./components/SideBar.vue";
+
+  export default {
+    name: "App",
+    components: {
+      NavBar,
+      SideBar,
+    },
+  };
+</script>
 
 <style scoped>
-  .main-container {
+  #app {
     font-family: "Inter", sans-serif;
     display: flex;
-    flex-wrap: wrap; /* 避免換行 */
-    justify-content: space-between; /* 使子元素間有適當間距 */
+    flex-wrap: wrap;
+    justify-content: space-between;
     align-items: flex-start;
-    width: 100%; /* 讓容器佔據全寬 */
+    width: 100%;
   }
 
   nav-bar {
-    flex: 0 0 20%; /* nav-bar佔據20%的寬度 */
+    flex: 0 0 20%;
   }
 
   side-bar {
-    flex: 0 0 25%; /* side-bar佔據25%的寬度 */
+    flex: 0 0 25%;
   }
 
   content-manager {
-    flex: 1; /* content-manager佔據剩餘的空間 */
+    flex: 1;
   }
 </style>

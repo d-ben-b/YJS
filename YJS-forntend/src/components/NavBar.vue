@@ -51,8 +51,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 90%;
-    max-width: 1200px;
+    width: 100%;
   }
 
   .logo {
@@ -73,11 +72,15 @@
     background-color: rgb(255, 255, 255);
     width: 28px;
     height: 28px;
+    margin-left: 15px;
   }
   .bar {
     width: 2rem;
     height: 0.25rem;
     background-color: rgb(0, 0, 0);
     border-radius: 5px;
+  }
+  .hamburger:hover {
+    cursor: pointer;
   }
 </style>
