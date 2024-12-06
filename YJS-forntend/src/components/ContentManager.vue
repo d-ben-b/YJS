@@ -10,9 +10,11 @@
 
 <style>
   .container {
+    width: 75%;
     margin-top: 80px;
-    position: relative;
     display: flex;
-    justify-content: space-around;
+    justify-content: space-around; /* 均勻分佈按鈕，若要更多間距可以使用 space-evenly */
+    align-items: center; /* 垂直居中對齊 */
+    flex-wrap: wrap; /* 如果螢幕過小會自動換行 */
   }
 </style>

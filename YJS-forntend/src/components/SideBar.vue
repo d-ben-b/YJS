@@ -1,9 +1,10 @@
 <template>
-  <nav class="navbar fixed-top">
-    <div class="navbar-brand">
-      <a href="#">YJS employee training</a>
+  <nav class="sidebar fixed-top">
+    <div class="sidebar-brand">
+      <a href="#" class="head">YJS </a>
+      <a href="#" class="content">employee training</a>
     </div>
-    <ul class="navbar-nav">
+    <ul class="sidebar-nav">
       <li class="nav-item">
         <a href="#">首頁</a>
       </li>
@@ -35,45 +36,74 @@
   };
 </script>
 
-<style>
-  .navbar {
+<style scoped>
+  .sidebar {
+    width: 248px;
+    height: 770px;
+    gap: 0px;
     background-color: #f1f1f1;
     padding: 10px;
     display: flex;
-    justify-content: space-between;
+    align-content: flex-start;
+    flex-wrap: wrap;
     align-items: center;
-    z-index: 1000; /* 確保導航欄在頁面上方 */
+    z-index: 5;
+    margin-top: 64px;
   }
 
-  .navbar.fixed-top {
-    position: fixed;
+  .sidebar.fixed-top {
     top: 0;
     left: 0;
     right: 0;
   }
 
-  .navbar-brand a {
-    font-size: 20px;
-    font-weight: bold;
+  .sidebar-brand .head {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 33.89px;
+    text-align: center;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    color: #b82121;
     text-decoration: none;
-    color: #333;
   }
 
-  .navbar-nav {
+  .sidebar-brand .content {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 19.36px;
+    text-align: center;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    color: #b82121;
+    text-decoration: none;
+  }
+
+  .sidebar-nav {
     list-style-type: none;
     display: flex;
-    margin: 0;
+    flex-direction: column;
+    flex-wrap: wrap;
+    margin-top: 20px;
     padding: 0;
+    width: inherit;
   }
 
   .nav-item a {
-    text-decoration: none;
     color: #333;
     padding: 10px;
     margin: 0 5px;
+    width: inherit;
+    font-size: 24px;
+    font-family: Inter;
+    font-weight: 400;
+    line-height: 29.05px;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
   }
 
-  .nav-item a:hover {
+  .nav-item:hover {
     background-color: #ddd;
   }
 </style>

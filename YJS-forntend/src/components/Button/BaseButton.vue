@@ -1,5 +1,3 @@
-<!-- @format -->
-
 <template>
   <button :class="['btn', buttonType]" :disabled="disabled">
     <slot></slot>
@@ -45,5 +43,12 @@
 
   .btn:disabled {
     opacity: 0.5;
+    transform: 0;
+  }
+
+  .btn:hover {
+    cursor: pointer;
+    transform: scale(1.1);
+    transition: 1s;
   }
 </style>

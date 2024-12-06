@@ -9,6 +9,7 @@
       </div>
       <!-- Logo -->
       <div class="logo">
+        <p>幹部 FT-C1033</p>
         <img src="@/assets/profile.png" alt="Logo" class="logo-img" />
       </div>
     </div>
@@ -36,13 +37,14 @@
     left: 0;
     width: 100%;
     background-color: #fcfcfc;
-    color: #fff;
-    z-index: 5;
+    color: #000000;
+    z-index: 20;
     height: 64px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-bottom: 20px;
   }
 
   .navbar-container {
@@ -68,13 +70,14 @@
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    background-color: blue;
-    width: 100px;
-    height: 50px;
+    background-color: rgb(255, 255, 255);
+    width: 28px;
+    height: 28px;
   }
   .bar {
-    width: 50px;
-    height: 5px;
-    background-color: rgb(252, 146, 9);
+    width: 2rem;
+    height: 0.25rem;
+    background-color: rgb(0, 0, 0);
+    border-radius: 5px;
   }
 </style>
