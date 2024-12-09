@@ -1,21 +1,17 @@
 <template>
   <div id="app">
-    <NavBar />
-    <SideBar />
-    <router-view />
+    <nav-bar />
+    <side-bar />
+    <div class="main-content">
+      <breadcrumbs />
+      <router-view />
+    </div>
   </div>
 </template>
 
 <script>
-  import NavBar from "@/components/NavBar.vue";
-  import SideBar from "./components/SideBar.vue";
-
   export default {
     name: "App",
-    components: {
-      NavBar,
-      SideBar,
-    },
   };
 </script>
 
@@ -25,7 +21,7 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: baseline;
     width: 100%;
   }
 
@@ -37,7 +33,7 @@
     flex: 0 0 25%;
   }
 
-  content-manager {
+  .main-content {
     flex: 1;
   }
 </style>

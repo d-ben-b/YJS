@@ -1,49 +1,33 @@
 <template>
   <nav class="sidebar fixed-top">
     <div class="sidebar-brand">
-      <router-link to="/" class="head">YJS </router-link>
-      <router-link to="/" class="content">employee training</router-link>
+      <router-link :to="'/'" class="head">YJS </router-link>
+      <router-link :to="'/'" class="content">employee training</router-link>
     </div>
     <ul class="sidebar-nav">
-      <li class="nav-item">
-        <router-link to="/" class="nav-link">首頁</router-link>
-      </li>
-      <li class="nav-item">
-        <router-link to="/permissions" class="nav-link"
-          >人員與權限管理</router-link
-        >
-      </li>
-      <li class="nav-item">
-        <router-link to="/training-content" class="nav-link"
-          >教育訓練內容管理</router-link
-        >
-      </li>
-      <li class="nav-item">
-        <router-link to="/planning-module" class="nav-link"
-          >規劃模組</router-link
-        >
-      </li>
-      <li class="nav-item">
-        <router-link to="/execution-module" class="nav-link"
-          >執行模組</router-link
-        >
-      </li>
-      <li class="nav-item">
-        <router-link to="/audit-module" class="nav-link">查核模組</router-link>
-      </li>
-      <li class="nav-item">
-        <router-link to="/analysis-module" class="nav-link"
-          >分析模組</router-link
-        >
+      <li class="nav-item" v-for="item in navItems" :key="item.name">
+        <router-link :to="item.to" class="nav-link" active-class="active">
+          {{ item.label }}
+        </router-link>
       </li>
     </ul>
   </nav>
 </template>
 
-<script>
-  export default {
-    name: "SideBar",
-  };
+<script setup>
+  const navItems = [
+    { name: "Home", to: "/", label: "首頁" },
+    { name: "Permissions", to: "/permissions", label: "人員與權限管理" },
+    {
+      name: "TrainingContent",
+      to: "/training-content",
+      label: "教育訓練內容管理",
+    },
+    { name: "PlanningModule", to: "/planning-module", label: "規劃模組" },
+    { name: "ExecutionModule", to: "/execution-module", label: "執行模組" },
+    { name: "AuditModule", to: "/audit-module", label: "查核模組" },
+    { name: "AnalysisModule", to: "/analysis-module", label: "分析模組" },
+  ];
 </script>
 
 <style scoped>
@@ -99,13 +83,13 @@
   }
 
   .nav-item {
+    align-content: center;
     height: 47px;
   }
 
   .nav-item a {
+    display: flex;
     color: #333;
-    padding: 10px;
-    margin: 5px 5px;
     width: inherit;
     font-size: 24px;
     font-family: Inter;
@@ -114,6 +98,8 @@
     text-align: left;
     text-underline-position: from-font;
     text-decoration-skip-ink: none;
+    justify-content: flex-start;
+    align-items: center;
   }
 
   .nav-item:hover {
@@ -122,6 +108,7 @@
 
   /* 可以為 .nav-link 加上額外的樣式 */
   .nav-link {
+    height: inherit;
     text-decoration: none;
     color: inherit;
   }

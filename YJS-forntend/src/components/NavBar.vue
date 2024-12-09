@@ -16,20 +16,16 @@
   </nav>
 </template>
 
-<script>
-  export default {
-    data() {
-      return {
-        menuActive: true,
-      };
-    },
-    methods: {
-      toggleMenu() {
-        this.menuActive = !this.menuActive;
-      },
-    },
+<script setup>
+  import { ref } from "vue";
+
+  const menuActive = ref(true);
+
+  const toggleMenu = () => {
+    menuActive.value = !menuActive.value;
   };
 </script>
+
 <style scoped>
   .navbar {
     position: fixed;
@@ -65,6 +61,7 @@
     margin-right: 10px;
     opacity: 1;
   }
+
   .hamburger {
     display: flex;
     flex-direction: column;
@@ -74,12 +71,14 @@
     height: 28px;
     margin-left: 15px;
   }
+
   .bar {
     width: 2rem;
     height: 0.25rem;
     background-color: rgb(0, 0, 0);
     border-radius: 5px;
   }
+
   .hamburger:hover {
     cursor: pointer;
   }
