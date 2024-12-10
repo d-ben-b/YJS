@@ -43,7 +43,7 @@
     }
   });
 
-  // toggleMenu 的功能不變
+  // toggleMenu 控制 menu 顯示與隱藏
   const toggleMenu = () => {
     menu.value = !menu.value;
     console.log(menu.value);

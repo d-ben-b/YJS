@@ -2,7 +2,7 @@
   {
     "course_id": 1,
     "training_id": 101,
-    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 基礎",
+    "course_name": "攪拌技巧(二)",
     "course_date_start": "2024-01-15",
     "course_date_end": "2024-01-16",
     "course_time_start": "09:00:00",
@@ -13,7 +13,7 @@
   {
     "course_id": 2,
     "training_id": 102,
-    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 進階",
+    "course_name": "攪拌技巧(二)",
     "course_date_start": "2024-02-01",
     "course_date_end": "2024-02-02",
     "course_time_start": "09:00:00",
@@ -24,7 +24,7 @@
   {
     "course_id": 3,
     "training_id": 103,
-    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 高級技巧",
+    "course_name": "攪拌技巧(二)",
     "course_date_start": "2024-03-10",
     "course_date_end": "2024-03-11",
     "course_time_start": "09:00:00",
@@ -35,7 +35,7 @@
   {
     "course_id": 4,
     "training_id": 104,
-    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 創新應用",
+    "course_name": "攪拌技巧(二)",
     "course_date_start": "2024-04-20",
     "course_date_end": "2024-04-21",
     "course_time_start": "09:00:00",
@@ -46,7 +46,7 @@
   {
     "course_id": 5,
     "training_id": 105,
-    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 機器操作",
+    "course_name": "攪拌技巧(二)",
     "course_date_start": "2024-05-05",
     "course_date_end": "2024-05-06",
     "course_time_start": "09:00:00",
@@ -57,7 +57,7 @@
   {
     "course_id": 6,
     "training_id": 106,
-    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 故障排除",
+    "course_name": "攪拌技巧(二)",
     "course_date_start": "2024-06-01",
     "course_date_end": "2024-06-02",
     "course_time_start": "09:00:00",
@@ -68,7 +68,7 @@
   {
     "course_id": 7,
     "training_id": 107,
-    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 品質管控",
+    "course_name": "攪拌技巧(二)",
     "course_date_start": "2024-07-12",
     "course_date_end": "2024-07-13",
     "course_time_start": "09:00:00",
@@ -79,7 +79,7 @@
   {
     "course_id": 8,
     "training_id": 108,
-    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 高效攪拌",
+    "course_name": "攪拌技巧(二)",
     "course_date_start": "2024-08-10",
     "course_date_end": "2024-08-11",
     "course_time_start": "09:00:00",
@@ -90,7 +90,7 @@
   {
     "course_id": 9,
     "training_id": 109,
-    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 風險管理",
+    "course_name": "攪拌技巧(二)",
     "course_date_start": "2024-09-05",
     "course_date_end": "2024-09-06",
     "course_time_start": "09:00:00",
@@ -101,7 +101,7 @@
   {
     "course_id": 10,
     "training_id": 110,
-    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 团队合作",
+    "course_name": "攪拌技巧(二)",
     "course_date_start": "2024-10-15",
     "course_date_end": "2024-10-16",
     "course_time_start": "09:00:00",
@@ -112,7 +112,7 @@
   {
     "course_id": 11,
     "training_id": 111,
-    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 自動化設備",
+    "course_name": "攪拌技巧(二)",
     "course_date_start": "2024-11-20",
     "course_date_end": "2024-11-21",
     "course_time_start": "09:00:00",
@@ -123,7 +123,7 @@
   {
     "course_id": 12,
     "training_id": 112,
-    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 原材料選擇",
+    "course_name": "攪拌技巧(二)",
     "course_date_start": "2024-12-01",
     "course_date_end": "2024-12-02",
     "course_time_start": "09:00:00",
@@ -134,7 +134,7 @@
   {
     "course_id": 13,
     "training_id": 113,
-    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 數據分析",
+    "course_name": "攪拌技巧(二)",
     "course_date_start": "2025-01-10",
     "course_date_end": "2025-01-11",
     "course_time_start": "09:00:00",
@@ -145,7 +145,7 @@
   {
     "course_id": 14,
     "training_id": 114,
-    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 監控系統",
+    "course_name": "攪拌技巧(二)",
     "course_date_start": "2025-02-12",
     "course_date_end": "2025-02-13",
     "course_time_start": "09:00:00",
@@ -156,7 +156,7 @@
   {
     "course_id": 15,
     "training_id": 115,
-    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 領導能力",
+    "course_name": "攪拌技巧(二)",
     "course_date_start": "2025-03-01",
     "course_date_end": "2025-03-02",
     "course_time_start": "09:00:00",

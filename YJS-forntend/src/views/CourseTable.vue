@@ -115,6 +115,7 @@
       const response = await axios.get("/api/courses");
       courses.value = response.data;
     } catch (error) {
+      alert("Error fetching courses");
       console.error("Error fetching courses", error);
     }
   };
@@ -175,6 +176,7 @@
       showForm.value = false;
       getCourses();
     } catch (error) {
+      alert("Error submitting course");
       console.error("Error submitting course", error);
     }
   };
@@ -215,7 +217,7 @@
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
-    font-size: 14px;
+    font-size: 18px;
   }
 
   .course-table th,
@@ -226,8 +228,13 @@
   }
 
   .course-table th {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 21.78px;
+    text-align: center;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
     background-color: #f4f4f4;
-    font-weight: bold;
   }
 
   .course-table .actions {

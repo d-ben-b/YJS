@@ -13,10 +13,9 @@ db = SQLAlchemy(server)
 class Course(db.Model):
     __tablename__ = 'courses'  # 表格名稱
 
-    # 資料表欄位定義
     course_id = db.Column(db.Integer, primary_key=True)  # 主鍵
     training_id = db.Column(db.Integer, nullable=False)  # 外鍵
-    course_name = db.Column(db.String(30), nullable=False)
+    course_name = db.Column(db.String(100), nullable=False)
     course_date_start = db.Column(db.Date, nullable=False)
     course_date_end = db.Column(db.Date, nullable=False)
     course_time_start = db.Column(db.Time, nullable=False)
@@ -45,7 +44,6 @@ def get_courses():
             'user_id': course.user_id
         })
     return jsonify(courses_data)
-
 
 # 啟動應用
 if __name__ == '__main__':

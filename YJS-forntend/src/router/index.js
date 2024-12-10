@@ -1,10 +1,16 @@
 import { createRouter, createWebHistory } from "vue-router";
 import TrainContent from "@/views/TrainContent.vue";
 import CourseTable from "@/views/CourseTable.vue";
+import NotFoundComponent from "@/components/NotFoundComponent.vue";
 import Content from "@/views/Content.vue";
 
 const routes = [
   { path: "/", component: "", meta: { breadcrumb: "首頁" } },
+  {
+    path: "/:pathMatch(.*)*",
+    component: NotFoundComponent,
+    meta: { breadcrumb: "404" },
+  },
   {
     path: "/training-content",
     component: TrainContent,
