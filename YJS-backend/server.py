@@ -5,13 +5,13 @@ from flask_sqlalchemy import SQLAlchemy
 # 初始化 Flask 應用和資料庫
 server = Flask(__name__)
 CORS(server)
-server.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://project_user:password@localhost/mydb'  # 替換成你的 MySQL 設定
+server.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://admin:admin123@testdb.cjyecqcoe2uq.ap-southeast-2.rds.amazonaws.com/testdb'
 server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(server)
 
 # 定義資料表
 class Course(db.Model):
-    __tablename__ = 'courses'  # 表格名稱
+    __tablename__ = 'course'  # 表格名稱
 
     course_id = db.Column(db.Integer, primary_key=True)  # 主鍵
     training_id = db.Column(db.Integer, nullable=False)  # 外鍵
@@ -20,7 +20,6 @@ class Course(db.Model):
     course_date_end = db.Column(db.Date, nullable=False)
     course_time_start = db.Column(db.Time, nullable=False)
     course_time_end = db.Column(db.Time, nullable=False)
-    course_content = db.Column(db.Text)  # 課程內容
     user_id = db.Column(db.Integer, nullable=False)  # 外鍵（講師ID）
 
     def __repr__(self):
@@ -40,7 +39,6 @@ def get_courses():
             'course_date_end': course.course_date_end.isoformat(),
             'course_time_start': course.course_time_start.strftime('%H:%M:%S'),
             'course_time_end': course.course_time_end.strftime('%H:%M:%S'),
-            'course_content': course.course_content,
             'user_id': course.user_id
         })
     return jsonify(courses_data)
