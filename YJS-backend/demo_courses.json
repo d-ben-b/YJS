@@ -1,0 +1,167 @@
+[
+  {
+    "course_id": 1,
+    "training_id": 101,
+    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 基礎",
+    "course_date_start": "2024-01-15",
+    "course_date_end": "2024-01-16",
+    "course_time_start": "09:00:00",
+    "course_time_end": "17:00:00",
+    "course_content": "介紹皮攪拌技巧的基本原理與實務操作，學習如何處理不同材質的攪拌需求。",
+    "user_id": 1
+  },
+  {
+    "course_id": 2,
+    "training_id": 102,
+    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 進階",
+    "course_date_start": "2024-02-01",
+    "course_date_end": "2024-02-02",
+    "course_time_start": "09:00:00",
+    "course_time_end": "17:00:00",
+    "course_content": "進一步學習如何根據工作環境調整攪拌速度與力度。",
+    "user_id": 2
+  },
+  {
+    "course_id": 3,
+    "training_id": 103,
+    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 高級技巧",
+    "course_date_start": "2024-03-10",
+    "course_date_end": "2024-03-11",
+    "course_time_start": "09:00:00",
+    "course_time_end": "17:00:00",
+    "course_content": "掌握高級攪拌技巧，能夠應對特殊的皮革質地與細節處理。",
+    "user_id": 3
+  },
+  {
+    "course_id": 4,
+    "training_id": 104,
+    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 創新應用",
+    "course_date_start": "2024-04-20",
+    "course_date_end": "2024-04-21",
+    "course_time_start": "09:00:00",
+    "course_time_end": "17:00:00",
+    "course_content": "如何將創新技術融入攪拌技巧，提升工作效率和品質。",
+    "user_id": 4
+  },
+  {
+    "course_id": 5,
+    "training_id": 105,
+    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 機器操作",
+    "course_date_start": "2024-05-05",
+    "course_date_end": "2024-05-06",
+    "course_time_start": "09:00:00",
+    "course_time_end": "17:00:00",
+    "course_content": "介紹最新攪拌機械的操作方法和注意事項，確保工作安全與品質。",
+    "user_id": 5
+  },
+  {
+    "course_id": 6,
+    "training_id": 106,
+    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 故障排除",
+    "course_date_start": "2024-06-01",
+    "course_date_end": "2024-06-02",
+    "course_time_start": "09:00:00",
+    "course_time_end": "17:00:00",
+    "course_content": "學習如何處理攪拌過程中的常見故障，確保生產線不中斷。",
+    "user_id": 6
+  },
+  {
+    "course_id": 7,
+    "training_id": 107,
+    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 品質管控",
+    "course_date_start": "2024-07-12",
+    "course_date_end": "2024-07-13",
+    "course_time_start": "09:00:00",
+    "course_time_end": "17:00:00",
+    "course_content": "學習如何在攪拌過程中進行品質控制，確保產品的一致性和高品質。",
+    "user_id": 7
+  },
+  {
+    "course_id": 8,
+    "training_id": 108,
+    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 高效攪拌",
+    "course_date_start": "2024-08-10",
+    "course_date_end": "2024-08-11",
+    "course_time_start": "09:00:00",
+    "course_time_end": "17:00:00",
+    "course_content": "學習如何提高攪拌效率，縮短生產周期，同時維持品質。",
+    "user_id": 8
+  },
+  {
+    "course_id": 9,
+    "training_id": 109,
+    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 風險管理",
+    "course_date_start": "2024-09-05",
+    "course_date_end": "2024-09-06",
+    "course_time_start": "09:00:00",
+    "course_time_end": "17:00:00",
+    "course_content": "介紹在攪拌過程中可能面臨的風險及其應對措施。",
+    "user_id": 9
+  },
+  {
+    "course_id": 10,
+    "training_id": 110,
+    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 团队合作",
+    "course_date_start": "2024-10-15",
+    "course_date_end": "2024-10-16",
+    "course_time_start": "09:00:00",
+    "course_time_end": "17:00:00",
+    "course_content": "如何在攪拌過程中提升團隊合作，增強工作效率。",
+    "user_id": 10
+  },
+  {
+    "course_id": 11,
+    "training_id": 111,
+    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 自動化設備",
+    "course_date_start": "2024-11-20",
+    "course_date_end": "2024-11-21",
+    "course_time_start": "09:00:00",
+    "course_time_end": "17:00:00",
+    "course_content": "學習自動化攪拌設備的操作和維護。",
+    "user_id": 11
+  },
+  {
+    "course_id": 12,
+    "training_id": 112,
+    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 原材料選擇",
+    "course_date_start": "2024-12-01",
+    "course_date_end": "2024-12-02",
+    "course_time_start": "09:00:00",
+    "course_time_end": "17:00:00",
+    "course_content": "了解不同原材料對攪拌效果的影響，選擇最合適的材料。",
+    "user_id": 12
+  },
+  {
+    "course_id": 13,
+    "training_id": 113,
+    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 數據分析",
+    "course_date_start": "2025-01-10",
+    "course_date_end": "2025-01-11",
+    "course_time_start": "09:00:00",
+    "course_time_end": "17:00:00",
+    "course_content": "使用數據分析來優化攪拌過程，提升整體運作效率。",
+    "user_id": 13
+  },
+  {
+    "course_id": 14,
+    "training_id": 114,
+    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 監控系統",
+    "course_date_start": "2025-02-12",
+    "course_date_end": "2025-02-13",
+    "course_time_start": "09:00:00",
+    "course_time_end": "17:00:00",
+    "course_content": "學習如何使用監控系統來追蹤攪拌過程中的每個細節。",
+    "user_id": 14
+  },
+  {
+    "course_id": 15,
+    "training_id": 115,
+    "course_name": "攪拌技巧(二) 正職人員教育訓練 - 領導能力",
+    "course_date_start": "2025-03-01",
+    "course_date_end": "2025-03-02",
+    "course_time_start": "09:00:00",
+    "course_time_end": "17:00:00",
+    "course_content": "強化領導能力，確保攪拌團隊能夠順利協作。",
+    "user_id": 15
+  }
+]

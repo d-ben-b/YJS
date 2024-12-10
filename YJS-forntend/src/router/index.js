@@ -1,8 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import TrainContent from "@/views/TrainContent.vue";
+import CourseTable from "@/views/CourseTable.vue";
 import Content from "@/views/Content.vue";
-import Quiz from "@/views/Quiz.vue";
-import Assessment from "@/views/Assessment.vue";
 
 const routes = [
   { path: "/", component: "", meta: { breadcrumb: "首頁" } },
@@ -17,18 +16,42 @@ const routes = [
         name: "content",
         component: Content,
         meta: { breadcrumb: "教育訓練內容" },
+        children: [
+          {
+            path: "course-table",
+            name: "course-table",
+            component: CourseTable,
+            meta: { breadcrumb: "課程維護" },
+          },
+        ],
       },
       {
         path: "quiz",
         name: "quiz",
-        component: Quiz,
+        component: Content,
         meta: { breadcrumb: "隨堂測驗內容" },
+        children: [
+          {
+            path: "course-table-view",
+            name: "course-table-view",
+            component: CourseTable,
+            meta: { breadcrumb: "查看課程列表" },
+          },
+        ],
       },
       {
         path: "assessment",
         name: "assessment",
-        component: Assessment,
+        component: Content,
         meta: { breadcrumb: "評量考核內容" },
+        children: [
+          {
+            path: "course-table-list",
+            name: "course-table-list",
+            component: CourseTable,
+            meta: { breadcrumb: "查看課程列表" },
+          },
+        ],
       },
     ],
   },
