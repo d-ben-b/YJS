@@ -32,7 +32,7 @@
 
 <style scoped>
   .sidebar {
-    width: 248px;
+    width: 228px;
     height: 770px;
     gap: 0px;
     background-color: #f1f1f1;

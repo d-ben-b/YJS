@@ -39,6 +39,7 @@
 
 <style scoped>
   .breadcrumbs {
+    width: max-content;
     position: relative;
     left: 45px;
     font-size: 16px;

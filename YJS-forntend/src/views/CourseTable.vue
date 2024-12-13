@@ -3,7 +3,6 @@
     <div class="header">
       <h2>課程管理</h2>
     </div>
-
     <!-- 課程列表 -->
     <table v-if="courses.length > 0" class="course-table">
       <thead>
@@ -21,28 +20,19 @@
           <td><input type="checkbox" /></td>
           <td>{{ course.course_id }}</td>
           <td>{{ course.course_name }}</td>
-          <td>{{ course.training_type }}</td>
-          <td>{{ course.related_project }}</td>
+          <td>{{ course.training_type_name }}</td>
+          <td>{{ course.work_item_name }}</td>
           <td class="actions">
             <base-button
-              v-if="showModify"
               @click="viewCourseDetail(course.course_id)"
               buttonType="modify">
-              {{ buttonEditName }}
+              上傳/修改詳細資料
             </base-button>
             <base-button
-              v-if="showDelete"
               @click="deleteCourse(course.course_id)"
               buttonType="delete"
               :buttonBackground="true">
               刪除
-            </base-button>
-            <base-button
-              v-if="showNew"
-              @click="addQuiz(course.course_id)"
-              buttonType="new"
-              :buttonBackground="true">
-              {{ buttonNewName }}
             </base-button>
           </td>
         </tr>
@@ -51,50 +41,25 @@
 
     <!-- 新增課程按鈕 -->
     <div class="add-course-button">
-      <base-button @click="toggleForm" buttonType="new">新增課程</base-button>
+      <base-button @click="openModal" buttonType="new">新增課程</base-button>
     </div>
-
-    <!-- 課程表單 -->
-    <form v-if="showForm" @submit.prevent="submitCourse" class="course-form">
-      <h3>{{ isEditing ? "編輯課程" : "新增課程" }}</h3>
-      <label for="course_name">課程名稱:</label>
-      <input type="text" v-model="formData.course_name" required />
-
-      <label for="course_date_start">開始日期:</label>
-      <input type="date" v-model="formData.course_date_start" required />
-
-      <label for="course_date_end">結束日期:</label>
-      <input type="date" v-model="formData.course_date_end" required />
-
-      <label for="course_time_start">開始時間:</label>
-      <input type="time" v-model="formData.course_time_start" required />
-
-      <label for="course_time_end">結束時間:</label>
-      <input type="time" v-model="formData.course_time_end" required />
-
-      <label for="course_content">課程內容:</label>
-      <textarea v-model="formData.course_content" required></textarea>
-
-      <div class="form-actions">
-        <base-button type="submit" buttonType="edit">
-          {{ isEditing ? "儲存" : "新增課程" }}
-        </base-button>
-        <base-button @click="cancelForm" buttonType="modify">取消</base-button>
-      </div>
-    </form>
   </div>
+  <!-- 課程模組 -->
+  <course-modal
+    :show="showModal"
+    :isEditing="isEditing"
+    :formData="formData"
+    @close="closeModal"
+    @submit="handleModalSubmit" />
 </template>
 
 <script setup>
   import { ref, onMounted } from "vue";
-  import { useRouter } from "vue-router";
   import axios from "axios";
+  import CourseModal from "./CourseModal.vue";
 
-  const router = useRouter();
-  const showModify = ref(true); // 保留
-  const showDelete = ref(true); // 保留
-  const showNew = ref(true); // 保留
-  const showForm = ref(false);
+  const courses = ref([]);
+  const showModal = ref(false);
   const isEditing = ref(false);
   const formData = ref({
     course_id: null,
@@ -105,79 +70,65 @@
     course_time_end: "",
     course_content: "",
   });
-  const courses = ref([]);
-  var buttonEditName = ""; // 保留不變
-  var buttonNewName = ""; // 保留不變
 
-  // 讀取課程資料
+  // 獲取課程資料
   const getCourses = async () => {
     try {
       const response = await axios.get("/api/courses");
       courses.value = response.data;
     } catch (error) {
-      alert("Error fetching courses");
-      console.error("Error fetching courses", error);
+      console.error("無法獲取課程資料:", error);
+      alert("載入課程失敗！");
     }
   };
 
-  // 按鈕初始化
-  const button = () => {
-    const routerName = router.currentRoute.value.name;
-    console.log(routerName);
-    if (routerName === "course-table") {
-      buttonEditName = "上傳/修改詳細資料";
-      showNew.value = false;
-    } else if (
-      routerName === "course-table-view" ||
-      routerName === "course-table-list"
-    ) {
-      buttonEditName = "查看詳細資料";
-      buttonNewName =
-        routerName === "course-table-view" ? "新增測驗題目" : "新增評核項目";
-      showDelete.value = false;
-    } else {
-      buttonEditName = "error";
-    }
+  // 開啟模組
+  const openModal = (mode = "new", course = null) => {
+    console.log("openModal", mode, course);
+    isEditing.value = mode === "edit";
+    formData.value = course
+      ? { ...course }
+      : {
+          course_id: null,
+          course_name: "",
+          course_date_start: "",
+          course_date_end: "",
+          course_time_start: "",
+          course_time_end: "",
+          course_content: "",
+        };
+    showModal.value = true;
   };
 
-  // 切換新增/編輯課程表單
-  const toggleForm = () => {
-    showForm.value = !showForm.value;
-    if (!showForm.value) {
-      resetForm();
-    }
+  // 關閉模組
+  const closeModal = () => {
+    showModal.value = false;
   };
 
-  // 初始化表單資料
-  const resetForm = () => {
-    formData.value = {
-      course_id: null,
-      course_name: "",
-      course_date_start: "",
-      course_date_end: "",
-      course_time_start: "",
-      course_time_end: "",
-      course_content: "",
-    };
-    isEditing.value = false;
-  };
-
-  // 提交表單（新增或編輯）
-  const submitCourse = async () => {
+  // 查看課程詳細資料
+  const viewCourseDetail = async (courseId) => {
     try {
-      if (isEditing.value) {
-        await axios.put(
-          `/api/courses/${formData.value.course_id}`,
-          formData.value
-        );
-      } else {
-        await axios.post("/api/courses", formData.value);
-      }
-      showForm.value = false;
+      const response = await axios.get(`/api/courses?course_id=${courseId}`);
+      openModal("edit", response.data);
+    } catch (error) {
+      console.error("無法獲取課程詳細資料:", error);
+      alert("查看課程詳細資料失敗！");
+    }
+  };
+
+  // 提交表單
+  const handleModalSubmit = async (data) => {
+    try {
+      const url = data.course_id
+        ? `/api/courses/${data.course_id}`
+        : "/api/courses";
+      const method = data.course_id ? "put" : "post";
+      await axios({ method, url, data });
+      closeModal();
       getCourses();
     } catch (error) {
-      alert("Error submitting course");
-      console.error("Error submitting course", error);
+      console.error("提交表單失敗:", error);
+      alert("提交課程資料失敗！");
     }
   };
 
@@ -187,24 +138,14 @@
       await axios.delete(`/api/courses/${courseId}`);
       getCourses();
     } catch (error) {
-      console.error("Error deleting course", error);
-    }
-  };
-
-  // 查看課程詳細資料
-  const viewCourseDetail = async (courseId) => {
-    try {
-      const response = await axios.get(`/api/courses/${courseId}`);
-      console.log("課程詳細資料:", response.data);
-    } catch (error) {
-      console.error("Error fetching course detail", error);
+      console.error("刪除課程失敗:", error);
+      alert("刪除課程失敗！");
     }
   };
 
   // 初始化
   onMounted(() => {
     getCourses();
-    button();
   });
 </script>
 
@@ -224,49 +165,21 @@
   .course-table td {
     padding: 12px;
     text-align: left;
-    border-bottom: 1px solid #ffffff;
+    border-bottom: 1px solid #ddd;
   }
 
   .course-table th {
     font-size: 18px;
     font-weight: 700;
-    line-height: 21.78px;
-    text-align: center;
-    text-underline-position: from-font;
-    text-decoration-skip-ink: none;
     background-color: #f4f4f4;
   }
 
-  .course-table .actions {
+  .actions {
     display: flex;
     gap: 10px;
   }
 
   .add-course-button {
     margin-top: 20px;
-  }
-
-  .course-form {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .course-form label {
-    margin: 10px 0 5px;
-  }
-
-  .course-form input,
-  .course-form textarea {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-  }
-
-  .form-actions {
-    display: flex;
-    justify-content: space-between;
   }
 </style>
