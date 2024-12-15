@@ -1,14 +1,13 @@
 from flask_cors import CORS
-from flask import Flask, jsonify, request  
-from flask_sqlalchemy import SQLAlchemy
-from models import db, Course, Role, Training, WorkItem, TrainingType, User,Department,Unit
+from flask import Flask, jsonify, request
+from models import db, Course, Role, Training, WorkItem, TrainingType, User, Account, Department, Unit
 
 # 初始化 Flask 應用和資料庫
 server = Flask(__name__)
 CORS(server)
 server.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://admin:admin123@testdb.cjyecqcoe2uq.ap-southeast-2.rds.amazonaws.com/testdb'
 server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
-db = SQLAlchemy(server)
+db.init_app(server)
 
 # 格式化課程資料的輔助函數
 def format_course(course):
@@ -26,10 +25,10 @@ def format_course(course):
         'role_type': course.role_type,
         'work_item_id': course.work_item_id,
         'work_item_name': course.work_item_name,
-        'training_type_name': course.training_type_name,
-        'department_name': course.department_name,
-        'unit_name': course.unit_name
+        'training_type_name': course.training_type_name
     }
+
+# 定義 API 路由
 
 
 @server.route('/api/courses', methods=['GET'])
@@ -88,6 +87,123 @@ def get_courses():
         # 錯誤處理
         print("Error:", str(e))
         return jsonify({'error': str(e)}), 500
+
+@server.route('/api/toggle_account', methods=['POST'])
+def toggle_account():
+    """
+    啟用或停用使用者帳號。
+
+    請求資料:
+    - user_id: 使用者的 ID
+    - action: 'enable' 或 'disable'，表示要啟用或停用帳號
+
+    回應:
+    - 成功: 返回包含訊息的 JSON
+    - 失敗: 返回包含錯誤訊息的 JSON
+    """
+    data = request.get_json()
+    user_id = data.get('user_id')
+    action = data.get('action') # 'enable' 或 'disable'
+
+    if not user_id or not action:
+        return jsonify({'message': '缺少使用者 ID 或操作'}), 400
+
+    #user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
+    if user is None:
+        return jsonify({'message': '找不到使用者'}), 404
+    
+    if action == 'enable':
+        user.account_enabled = True
+        message = '帳號已啟用'
+    elif action == 'disable':
+        user.account_enabled = False
+        message = '帳號已停用'
+    else:
+        return jsonify({'message': '未知操作'}), 400
+    
+    try:
+        db.session.commit()
+    except Exception as e:
+        return jsonify({'message': '更新失敗', 'error': str(e)}), 500
+    return jsonify({'message': message}), 200
+
+@server.route('/api/change_password', methods=['POST'])
+def change_password():
+    """
+    更改使用者帳號的密碼。
+
+    請求資料:
+    - account: 帳號名稱
+    - current_password: 當前密碼
+    - new_password: 新密碼
+
+    回應:
+    - 成功: 返回包含訊息的 JSON
+    - 失敗: 返回包含錯誤訊息的 JSON
+    """
+    data = request.get_json()
+    account = data.get('account')
+    current_password = data.get('current_password')
+    new_password = data.get('new_password')
+
+    if not account or not current_password or not new_password:
+        return jsonify({'message': '缺少帳號、舊密碼或新密碼'}), 400
+
+    account = db.session.get(Account, account)
+    if account is None:
+        return jsonify({'message': '找不到帳號'}), 404  # 登入中理論上不應該出現此錯誤
+
+    if not account.check_password(current_password):
+        return jsonify({'message': '密碼錯誤'}), 403
+
+    account.set_password(new_password)
+    try:
+        db.session.commit()
+    except Exception as e:
+        return jsonify({'message': '更新失敗', 'error': str(e)}), 500
+    return jsonify({'message': '密碼已變更'}), 200
+
+@server.route('/api/get_list', methods=['GET'])
+def get_list():
+    """
+    根據角色名稱獲取使用者列表。
+
+    請求參數:
+    - role_name: 角色名稱
+
+    回應:
+    - 成功: 返回包含使用者列表的 JSON
+    - 失敗: 返回包含錯誤訊息的 JSON
+    """
+    role_name = request.args.get('role_name')   # 取得 role_name 參數
+
+    if not role_name:
+        return jsonify({'message': '缺少角色名稱參數'}), 400
+
+    # 檢查 role_name 是否存在
+    role = db.session.query(Role).filter_by(role_name=role_name).first()
+    if not role:
+        return jsonify({'message': '角色名稱不存在'}), 404
+
+    # 查詢所有為 role_name 的 user
+    users = db.session.query(User).join(Role).filter(Role.role_name == role_name).all()
+
+    # 將查詢結果轉為 dict
+    users_list = [
+        {
+            'user_id': user.user_id,
+            'user_name': user.user_name,
+            'gender': user.gender,
+            'country': user.country,
+            'department_name': user.department.department_name if user.department else None,
+            'unit_name': user.unit.unit_name if user.unit else None,
+            'account_enabled': user.account_enabled
+        } 
+        for user in users
+    ]
+
+    return jsonify(users_list), 200
 
 # 啟動應用
 if __name__ == '__main__':

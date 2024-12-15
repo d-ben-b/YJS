@@ -4,12 +4,14 @@ import hashlib
 
 db = SQLAlchemy()
 
+
 class User(db.Model):
     __tablename__ = 'user'
 
     user_id = db.Column(db.Integer, primary_key=True)
     user_name = db.Column(db.String(30), nullable=False)
-    gender = db.Column(Enum('Male', 'Female', 'Other',name='gender'), nullable=False)
+    gender = db.Column(Enum('Male', 'Female', 'Other',
+                       name='gender'), nullable=False)
     country = db.Column(db.String(30), nullable=False)
     account_enabled = db.Column(db.Boolean, default=False)
     role_id = db.Column(db.Integer, db.ForeignKey(
