@@ -33,7 +33,7 @@
 <style scoped>
   .sidebar {
     width: 228px;
-    height: 770px;
+    height: calc(100vh - 100px);
     gap: 0px;
     background-color: #f1f1f1;
     padding: 10px;
@@ -43,12 +43,12 @@
     align-items: center;
     z-index: 5;
     margin-top: 64px;
+    overflow-y: auto;
   }
 
   .sidebar.fixed-top {
     top: 0;
     left: 0;
-    right: 0;
   }
 
   .sidebar-brand .head {

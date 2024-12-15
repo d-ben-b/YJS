@@ -14,46 +14,87 @@
 
           <div class="form-group">
             <label>教育訓練類型</label>
-            <select v-model="localFormData.training_type">
+            <select v-model="localFormData.training_type_name">
               <option value="" disabled>選擇類型</option>
-              <option value="type1">類型1</option>
-              <option value="type2">類型2</option>
+              <option
+                v-for="(type, index) in trainingTypes"
+                :key="index"
+                :value="type">
+                {{ type }}
+              </option>
             </select>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>部門</label>
-            <select v-model="localFormData.department">
+            <select v-model="localFormData.department_name">
               <option value="" disabled>選擇部門</option>
-              <option value="dept1">部門1</option>
-              <option value="dept2">部門2</option>
+              <option v-for="(item, index) in department" :key="index">
+                {{ item }}
+              </option>
             </select>
           </div>
           <div class="form-group">
             <label>單位</label>
-            <select v-model="localFormData.department">
+            <select v-model="localFormData.unit_name">
               <option value="" disabled>選擇單位</option>
-              <option value="dept1">單位1</option>
-              <option value="dept2">單位2</option>
+              <option v-for="(item, index) in unit" :key="index">
+                {{ item }}
+              </option>
             </select>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>相關工作項目</label>
-            <select v-model="localFormData.work_item">
+            <label>工作項目</label>
+            <select v-model="localFormData.work_item_name">
               <option value="" disabled>選擇項目</option>
-              <option value="item1">項目1</option>
-              <option value="item2">項目2</option>
+              <option v-for="(item, index) in relateWorkItems" :key="index">
+                {{ item }}
+              </option>
             </select>
+          </div>
+          <div class="form-group">
+            <div v-if="upload.length > 0">
+              <label>課程檔案</label>
+            </div>
           </div>
         </div>
 
-        <div class="form-row">
+        <div class="start form-row">
           <div class="form-group">
             <label>SOP/SIP</label>
             <textarea v-model="localFormData.sop_sip"></textarea>
+          </div>
+          <div class="form-group">
+            <div class="form-row">
+              <div class="image-upload-container">
+                <!-- 預覽已上傳的圖片 -->
+                <div
+                  v-for="(file, index) in uploadedFiles"
+                  :key="index"
+                  class="image-preview">
+                  <img :src="file.preview" :alt="'圖片' + (index + 1)" />
+                  <button class="remove-btn" @click="removeImage(index)">
+                    ✖
+                  </button>
+                </div>
+
+                <!-- 新增圖片按鈕 -->
+                <div class="add-image" @click="triggerFileInput">
+                  <br />
+                  <span>+</span>
+                  <p>新增圖片</p>
+                  <input
+                    type="file"
+                    ref="fileInput"
+                    accept="image/*"
+                    @change="handleFileUpload"
+                    style="display: none" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -94,19 +135,61 @@
 <script setup>
   import { ref, watch } from "vue";
 
-  const props = defineProps(["show", "isEditing", "formData"]);
+  const props = defineProps(["show", "isEditing", "formData", "allCourses"]);
   const localFormData = ref({ ...props.formData });
+  const allData = ref([]);
+  const trainingTypes = ref([]);
+  const relateWorkItems = ref([]);
+  const upload = ref([]);
+  const unit = ref([]);
+  const department = ref([]);
+  const uploadedFiles = ref([]);
+  const fileInput = ref(null);
+  const emit = defineEmits(["submit", "close"]);
 
   watch(
     () => props.formData,
     (newVal) => {
       localFormData.value = { ...newVal };
+      allData.value = [...props.allCourses];
+      findTrainingTypes();
     }
   );
+  const handleFileUpload = (event) => {
+    const files = Array.from(event.target.files);
+    files.forEach((file) => {
+      const preview = URL.createObjectURL(file);
+      uploadedFiles.value.push({ file, preview });
+    });
+  };
+
+  const removeImage = (index) => {
+    const file = uploadedFiles.value[index];
+    URL.revokeObjectURL(file.preview); // 釋放資源
+    uploadedFiles.value.splice(index, 1);
+  };
+
+  const triggerFileInput = () => {
+    fileInput.value.click(); // 觸發隱藏的檔案輸入框
+  };
 
   const submitForm = () => {
     const data = { ...localFormData.value };
+    if (uploadedFiles.value.length > 0) {
+      data.uploadedFiles = uploadedFiles.value; // 將所有圖片檔案附加到資料中
+    }
     emit("submit", data);
+  };
+
+  const findTrainingTypes = () => {
+    const mapToUnique = (key) => [
+      ...new Set(allData.value.map((course) => course[key])),
+    ];
+
+    trainingTypes.value = mapToUnique("training_type_name");
+    relateWorkItems.value = mapToUnique("work_item_name");
+    unit.value = mapToUnique("unit_name");
+    department.value = mapToUnique("department_name");
   };
 </script>
 
@@ -114,6 +197,9 @@
   .full {
     width: 100%;
     height: 65px;
+  }
+  .start {
+    justify-content: flex-start !important;
   }
   .modal-overlay {
     position: fixed;
@@ -128,11 +214,11 @@
   .modal {
     position: relative;
     background: #fff;
-    padding: 20px 18px;
-    width: 737px;
-    height: 567px;
+    padding: 20px 39px;
+    width: 707px;
+    height: 547px;
     top: 109px;
-    left: 160px;
+    left: 110px;
     border-radius: 31px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   }
@@ -191,11 +277,12 @@
     gap: 20px;
     justify-content: space-between;
     margin-bottom: 10px;
+    width: 100%;
   }
 
   .form-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 10px;
   }
 
@@ -215,5 +302,72 @@
   .cancel-btn {
     background-color: #f44336;
     color: white;
+  }
+  .image-upload-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .image-preview {
+    position: relative;
+    width: 74px;
+    height: 58px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .remove-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 12px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .add-image {
+    width: 74px;
+    height: 58px;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #666;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .add-image span {
+    font-size: 20px;
+    font-weight: bold;
+  }
+  .add-image p {
+    margin-top: 0;
+  }
+
+  .add-image:hover {
+    background-color: #f9f9f9;
   }
 </style>
