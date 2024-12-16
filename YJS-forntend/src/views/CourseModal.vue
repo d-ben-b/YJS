@@ -2,7 +2,7 @@
   <div class="modal-overlay" v-if="show">
     <div class="modal">
       <div class="modal-header">
-        <h3>{{ isEditing ? "編輯課程" : "新增課程" }}</h3>
+        <h3>{{ isEditing ? "上傳/修改詳細資料" : "新增課程" }}</h3>
         <button class="close-btn" @click="$emit('close')">✖</button>
       </div>
       <form @submit.prevent="submitForm">
@@ -93,7 +93,8 @@
                   <img :src="url" :alt="'圖片' + (index + 1)" />
                   <button
                     class="remove-btn"
-                    @click.prevent="deleteServerImage(url, index)">
+                    @click.prevent="deleteServerImage(url, index)"
+                    v-if="disabled === false">
                     ✖
                   </button>
                 </div>
@@ -176,7 +177,7 @@
 
   const emit = defineEmits(["submit", "close"]);
 
-  const disabled = !props.isEditing;
+  const disabled = ref(false);
   const blobUrls = ref([]);
   const fileUploaded = ref([]);
   const trainingTypes = ref([]);
@@ -231,7 +232,7 @@
     (newVal) => {
       cleanUpBlobUrls();
       getImages(newVal.work_item_id);
-
+      disabled.value = !props.isEditing;
       if (
         Array.isArray(newVal.work_item_sop_img) &&
         newVal.work_item_sop_img.length > 0
@@ -274,7 +275,7 @@
         localFormData.value.work_item_sop_img.push(newImg);
         fileUploaded.value.push(newImg);
       } catch (error) {
-        alert("上传图片时发生错误，请重试。");
+        alert("上傳圖片時發生錯誤，請重試。");
       }
     }
 

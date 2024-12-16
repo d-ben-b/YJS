@@ -124,7 +124,7 @@
   const viewCourseDetail = async (courseId) => {
     try {
       const response = await axios.get(`/api/courses?course_id=${courseId}`);
-      openModal("edit", response.data);
+      openModal(route.name === "course-table" ? "edit" : "view", response.data);
     } catch (error) {
       console.error("無法獲取課程詳細資料:", error);
       alert("查看課程詳細資料失敗！");
