@@ -1,13 +1,21 @@
 from flask_cors import CORS
-from flask import Flask, jsonify, request
-from models import db, Course, Role, Training, WorkItem, TrainingType, User, Account, Department, Unit
+from flask import Flask, jsonify, request, make_response
+from models import db, Course, Role, WorkItem, TrainingType, User, Account, Department, Unit, WorkItemImage
+import base64
 
 # 初始化 Flask 應用和資料庫
 server = Flask(__name__)
 CORS(server)
 server.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://admin:admin123@testdb.cjyecqcoe2uq.ap-southeast-2.rds.amazonaws.com/testdb'
-server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # 設為 False 以禁用警告
+server.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 最大上傳檔案大小為16MB
 db.init_app(server)
+
+# 定義允許上傳的檔案類型
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # 格式化課程資料的輔助函數
 def format_course(course):
@@ -15,22 +23,23 @@ def format_course(course):
         'course_id': course.course_id,
         'training_id': course.training_id,
         'course_name': course.course_name,
-        'course_date_start': course.course_date_start.isoformat(),
-        'course_date_end': course.course_date_end.isoformat(),
-        'course_time_start': course.course_time_start.strftime('%H:%M:%S'),
-        'course_time_end': course.course_time_end.strftime('%H:%M:%S'),
         'user_id': course.user_id,
         'role_id': course.role_id,
-        'role_name': course.role_name,
-        'role_type': course.role_type,
+        'role_name': course.role.role_name,
+        'role_type': course.role.role_type,
         'work_item_id': course.work_item_id,
-        'work_item_name': course.work_item_name,
-        'training_type_name': course.training_type_name
+        'work_item_name': course.work_item.work_item_name,
+        'images': [base64.b64encode(img.image_data).decode('utf-8') for img in course.work_item.images],
+        'key_points': course.work_item.work_item_points,
+        'evaluation_criteria': course.work_item.work_item_standards,
+        'sop_sip': course.work_item.work_item_sop,
+        'training_type_name': course.training.training_type.training_type_name,
+        'department_name': course.user.department.department_name,
+        'unit_name': course.user.unit.unit_name,
+        "image_urls": [f"/uploads/{img.filename}" for img in course.work_item.images]
     }
 
 # 定義 API 路由
-
-
 @server.route('/api/courses', methods=['GET'])
 def get_courses():
     """
@@ -46,47 +55,284 @@ def get_courses():
     try:
         course_id = request.args.get('course_id')
 
-        # 構建查詢
-        query = db.session.query(
-            Course.course_id,
-            Course.training_id,
-            Course.course_name,
-            Course.course_date_start,
-            Course.course_date_end,
-            Course.course_time_start,
-            Course.course_time_end,
-            Course.user_id,
-            Role.role_id,
-            Role.role_name,
-            Role.role_type,
-            Training.work_item_id,
-            WorkItem.work_item_name,
-            TrainingType.training_type_name,
-            Department.department_name,
-            Unit.unit_name
-        ).join(Role, Course.role_id == Role.role_id) \
-         .join(Training, Course.training_id == Training.training_id) \
-         .join(WorkItem, Training.work_item_id == WorkItem.work_item_id) \
-         .join(TrainingType, Training.training_type_id == TrainingType.training_type_id) \
-         .join(User, Course.user_id == User.user_id) \
-         .join(Department, User.department_id == Department.department_id) \
-         .join(Unit, User.unit_id == Unit.unit_id)
-
-        # 如果有 course_id，返回單個課程詳情
         if course_id:
-            course = query.filter(Course.course_id == course_id).first()
+            course = Course.query.get(course_id)
             if not course:
-                return jsonify({'error': f'Course with id {course_id} not found'}), 404
+                return jsonify({'error': f'找不到 ID 為 {course_id} 的課程'}), 404
             return jsonify(format_course(course))
 
-        # 如果沒有 course_id，返回所有課程
-        courses = query.all()
+        courses = Course.query.all()
         return jsonify([format_course(course) for course in courses])
 
     except Exception as e:
         # 錯誤處理
         print("Error:", str(e))
         return jsonify({'error': str(e)}), 500
+
+@server.route('/api/all_values', methods=['GET'])
+def get_all_unique_values():
+    """
+    獲取指定字段的唯一值集合（不進行表關聯）。
+    請求參數:
+    - fields: 用逗號分隔的字段名稱，如 `training_type_name,work_item_name`
+
+    回應:
+    - 返回包含唯一值的 JSON 格式
+    """
+    try:
+        fields = request.args.get('fields')
+        if not fields:
+            return jsonify({'error': '缺少 fields 參數'}), 400
+
+        field_list = fields.split(',')
+        valid_fields = {
+            "training_type_name": TrainingType.training_type_name,
+            "work_item_name": WorkItem.work_item_name,
+            "unit_name": Unit.unit_name,
+            "department_name": Department.department_name,
+            # "work_item_sop_img": WorkItem.work_item_sop_img,  # 如果不需要圖片的唯一值，則可以移除
+        }
+
+        # 確認字段合法性
+        invalid_fields = [field for field in field_list if field not in valid_fields]
+        if invalid_fields:
+            return jsonify({'error': f'非法字段: {", ".join(invalid_fields)}'}), 400
+
+        # 查詢每個字段的唯一值
+        unique_values = {}
+        for field in field_list:
+            column = valid_fields[field]
+            query = db.session.query(column).distinct()
+            unique_values[field] = [value for value, in query.all()]
+
+        return jsonify(unique_values), 200
+
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({'error': str(e)}), 500
+
+@server.route('/api/courses/<int:course_id>', methods=['DELETE'])
+def delete_course(course_id):
+    """
+    刪除指定課程。
+    """
+    try:
+        # 獲取課程資料
+        course = Course.query.get(course_id)
+        if not course:
+            return jsonify({'error': f'找不到 ID 為 {course_id} 的課程'}), 404
+
+        # 刪除課程及相關圖片
+        db.session.delete(course)
+        db.session.commit()
+
+        return jsonify({'message': '課程刪除成功！'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print("Error:", str(e))
+        return jsonify({'error': str(e)}), 500
+
+@server.route('/api/courses/<int:course_id>', methods=['PUT'])
+def update_course(course_id):
+    """
+    更新指定課程資料，包括檔案上傳處理。
+    """
+    try:
+        # 獲取課程資料
+        course = Course.query.get(course_id)
+        if not course:
+            return jsonify({'error': f'找不到 ID 為 {course_id} 的課程'}), 404
+
+        # 從請求中提取資料
+        course_name = request.form.get('course_name')
+        training_type_name = request.form.get('training_type_name')
+        work_item_name = request.form.get('work_item_name')
+        unit_name = request.form.get('unit_name')
+        department_name = request.form.get('department_name')
+        evaluation_criteria = request.form.get('evaluation_criteria')
+        key_points = request.form.get('key_points')
+        sop_sip = request.form.get('sop_sip')
+
+        # 更新課程名稱
+        if course_name:
+            course.course_name = course_name
+
+        # 更新 training_id
+        if training_type_name:
+            training_type = TrainingType.query.filter_by(training_type_name=training_type_name).first()
+            if training_type:
+                course.training_id = training_type.training_type_id
+
+        # 更新 WorkItem 的相關欄位
+        if work_item_name:
+            work_item = WorkItem.query.filter_by(work_item_name=work_item_name).first()
+            if work_item:
+                course.work_item_id = work_item.work_item_id
+                work_item.work_item_points = key_points
+                work_item.work_item_standards = evaluation_criteria
+                work_item.work_item_sop = sop_sip
+
+                # 處理多張檔案上傳
+                if 'uploadedFiles' in request.files:
+                    uploaded_files = request.files.getlist('uploadedFiles')
+                    print(uploaded_files)
+                    # 刪除舊的圖片
+                    WorkItemImage.query.filter_by(work_item_id=work_item.work_item_id).delete()
+                    # 新增新的圖片
+                    for uploaded_file in uploaded_files:
+                        if uploaded_file and allowed_file(uploaded_file.filename):
+                            image_data = uploaded_file.read()
+                            work_item_image = WorkItemImage(work_item=work_item, image_data=image_data)
+                            db.session.add(work_item_image)
+                        else:
+                            return jsonify({'error': '不允許的檔案類型'}), 400
+
+        # 更新其他外鍵欄位
+        if unit_name:
+            unit = Unit.query.filter_by(unit_name=unit_name).first()
+            if unit:
+                course.unit_id = unit.unit_id
+
+        if department_name:
+            department = Department.query.filter_by(department_name=department_name).first()
+            if department:
+                course.department_id = department.department_id
+
+        # 保存修改
+        db.session.commit()
+
+        return jsonify({'message': '課程更新成功！'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print("Error:", str(e))
+        return jsonify({'error': str(e)}), 500
+
+@server.route('/api/courses', methods=['POST'])
+def create_course():
+    """
+    新增課程資料，包括檔案上傳處理。
+    """
+    try:
+        # 從請求中提取資料
+        course_name = request.form.get('course_name')
+        training_type_name = request.form.get('training_type_name')
+        work_item_name = request.form.get('work_item_name')
+        unit_name = request.form.get('unit_name')
+        department_name = request.form.get('department_name')
+        evaluation_criteria = request.form.get('evaluation_criteria')
+        key_points = request.form.get('key_points')
+        sop_sip = request.form.get('sop_sip')
+
+        # 驗證必要欄位
+        if not course_name or not training_type_name or not work_item_name:
+            return jsonify({'error': '缺少必要欄位: course_name, training_type_name, 或 work_item'}), 400
+
+        # 創建新的 Course 物件
+        new_course = Course(
+            course_name=course_name,
+            course_date_start=request.form.get('course_date_start'),
+            course_date_end=request.form.get('course_date_end'),
+            course_time_start=request.form.get('course_time_start'),
+            course_time_end=request.form.get('course_time_end'),
+        )
+
+        # 設定 training_id
+        if training_type_name:
+            training_type = TrainingType.query.filter_by(training_type_name=training_type_name).first()
+            if training_type:
+                new_course.training_id = training_type.training_type_id
+
+        # 設定 work_item_id 並更新相關欄位
+        work_item = WorkItem.query.filter_by(work_item_name=work_item_name).first()
+        if work_item:
+            new_course.work_item_id = work_item.work_item_id
+            work_item.work_item_points = key_points
+            work_item.work_item_standards = evaluation_criteria
+            work_item.work_item_sop = sop_sip
+
+            # 處理多張檔案上傳
+            if 'uploadedFiles' in request.files:
+                uploaded_files = request.files.getlist('uploadedFiles')
+                for uploaded_file in uploaded_files:
+                    if uploaded_file and allowed_file(uploaded_file.filename):
+                        image_data = uploaded_file.read()
+                        work_item_image = WorkItemImage(work_item=work_item, image_data=image_data)
+                        db.session.add(work_item_image)
+                    else:
+                        return jsonify({'error': '不允許的檔案類型'}), 400
+
+        # 設定其他外鍵欄位
+        if unit_name:
+            unit = Unit.query.filter_by(unit_name=unit_name).first()
+            if unit:
+                new_course.unit_id = unit.unit_id
+
+        if department_name:
+            department = Department.query.filter_by(department_name=department_name).first()
+            if department:
+                new_course.department_id = department.department_id
+
+        # 保存新課程資料
+        db.session.add(new_course)
+        db.session.commit()
+
+        return jsonify({'message': '課程新增成功！'}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        print("Error:", str(e))
+        return jsonify({'error': str(e)}), 500
+
+@server.route('/api/work_item_images', methods=['GET'])
+def get_work_item_images_by_work_item_id():
+    work_item_id = request.args.get('work_item_id', type=int)
+    if not work_item_id:
+        return jsonify({'error': '缺少 work_item_id 參數'}), 400
+
+    # 找出對應的全部圖片記錄
+    imgs = WorkItemImage.query.filter_by(work_item_id=work_item_id).all()
+    print(imgs)
+    if not imgs:
+        return jsonify({'images': []}), 200
+
+    # 建立圖片URL的列表
+    # 假設後端提供每張圖片一個URL，如: /api/work_item_image?id=xxx
+    image_urls = [f"{request.host_url}api/work_item_image?id={img.id}" for img in imgs]
+
+    return jsonify({'images': image_urls}), 200
+
+@server.route('/api/work_item_image', methods=['GET'])
+def get_work_item_image():
+    image_id = request.args.get('id', type=int)
+    if not image_id:
+        return jsonify({'error': '缺少 id 參數'}), 400
+
+    img = WorkItemImage.query.get(image_id)
+    if not img or not img.image_data:
+        return jsonify({'error': '圖片未找到'}), 404
+
+    # 假設圖片為 PNG 格式，若有需要可根據實際圖片格式調整 Content-Type
+    response = make_response(img.image_data)
+    response.headers.set('Content-Type', 'image/png')
+    return response
+
+#定義刪除圖片的API路由
+@server.route('/api/work_item_image', methods=['DELETE'])
+def delete_work_item_image():
+    image_id = request.args.get('id', type=int)
+    if not image_id:
+        return jsonify({'error': '缺少 id 參數'}), 400
+
+    img = WorkItemImage.query.get(image_id)
+    if not img:
+        return jsonify({'error': '圖片未找到'}), 404
+
+    db.session.delete(img)
+    db.session.commit()
+    return jsonify({'message': '圖片刪除成功'}), 200
+
 
 @server.route('/api/toggle_account', methods=['POST'])
 def toggle_account():
@@ -103,16 +349,15 @@ def toggle_account():
     """
     data = request.get_json()
     user_id = data.get('user_id')
-    action = data.get('action') # 'enable' 或 'disable'
+    action = data.get('action')  # 'enable' 或 'disable'
 
     if not user_id or not action:
         return jsonify({'message': '缺少使用者 ID 或操作'}), 400
 
-    #user = User.query.get(user_id)
-    user = db.session.get(User, user_id)
+    user = User.query.get(user_id)
     if user is None:
         return jsonify({'message': '找不到使用者'}), 404
-    
+
     if action == 'enable':
         user.account_enabled = True
         message = '帳號已啟用'
@@ -121,7 +366,7 @@ def toggle_account():
         message = '帳號已停用'
     else:
         return jsonify({'message': '未知操作'}), 400
-    
+
     try:
         db.session.commit()
     except Exception as e:
@@ -143,14 +388,14 @@ def change_password():
     - 失敗: 返回包含錯誤訊息的 JSON
     """
     data = request.get_json()
-    account = data.get('account')
+    account_name = data.get('account')
     current_password = data.get('current_password')
     new_password = data.get('new_password')
 
-    if not account or not current_password or not new_password:
+    if not account_name or not current_password or not new_password:
         return jsonify({'message': '缺少帳號、舊密碼或新密碼'}), 400
 
-    account = db.session.get(Account, account)
+    account = Account.query.get(account_name)
     if account is None:
         return jsonify({'message': '找不到帳號'}), 404  # 登入中理論上不應該出現此錯誤
 
@@ -176,18 +421,18 @@ def get_list():
     - 成功: 返回包含使用者列表的 JSON
     - 失敗: 返回包含錯誤訊息的 JSON
     """
-    role_name = request.args.get('role_name')   # 取得 role_name 參數
+    role_name = request.args.get('role_name')  # 取得 role_name 參數
 
     if not role_name:
         return jsonify({'message': '缺少角色名稱參數'}), 400
 
     # 檢查 role_name 是否存在
-    role = db.session.query(Role).filter_by(role_name=role_name).first()
+    role = Role.query.filter_by(role_name=role_name).first()
     if not role:
         return jsonify({'message': '角色名稱不存在'}), 404
 
     # 查詢所有為 role_name 的 user
-    users = db.session.query(User).join(Role).filter(Role.role_name == role_name).all()
+    users = User.query.filter(User.role_id == role.role_id).all()
 
     # 將查詢結果轉為 dict
     users_list = [
@@ -199,7 +444,7 @@ def get_list():
             'department_name': user.department.department_name if user.department else None,
             'unit_name': user.unit.unit_name if user.unit else None,
             'account_enabled': user.account_enabled
-        } 
+        }
         for user in users
     ]
 
@@ -210,4 +455,3 @@ if __name__ == '__main__':
     with server.app_context():
         db.create_all()  # 創建資料表
     server.run(debug=True)
-

@@ -26,13 +26,13 @@
             <base-button
               @click="viewCourseDetail(course.course_id)"
               buttonType="modify">
-              上傳/修改詳細資料
+              {{ edit_button_name }}
             </base-button>
             <base-button
               @click="deleteCourse(course.course_id)"
-              buttonType="delete"
+              :buttonType="button_type"
               :buttonBackground="true">
-              刪除
+              {{ delete_button_name }}
             </base-button>
           </td>
         </tr>
@@ -50,16 +50,22 @@
     :isEditing="isEditing"
     :formData="formData"
     :allCourses="courses"
+    :work_item_id="formData.work_item_id"
     @close="closeModal"
     @submit="handleModalSubmit" />
 </template>
 
 <script setup>
+  import { useRoute } from "vue-router";
   import { ref, onMounted } from "vue";
   import axios from "axios";
   import CourseModal from "./CourseModal.vue";
 
   const courses = ref([]);
+  const route = useRoute();
+  const edit_button_name = ref("");
+  const delete_button_name = ref("");
+  const button_type = ref("");
   const showModal = ref(false);
   const isEditing = ref(false);
   const formData = ref({
@@ -67,7 +73,13 @@
     course_name: "",
     course_content: "",
     training_type_name: "",
-    work_item: "",
+    work_item_name: "",
+    unit_name: "",
+    department_name: "",
+    evaluation_criteria: "",
+    key_points: "",
+    sop_sip: "",
+    work_item_sop_img: [], // 已上傳的圖片
   });
 
   // 獲取課程資料
@@ -82,7 +94,7 @@
   };
 
   // 開啟模組
-  const openModal = (mode = "new", course = null, allCourses = []) => {
+  const openModal = (mode = "new", course = null) => {
     isEditing.value = mode === "edit";
     formData.value = course
       ? { ...course }
@@ -91,10 +103,15 @@
           course_name: "",
           course_content: "",
           training_type_name: "",
-          work_item: "",
+          work_item_name: "",
+          unit_name: "",
+          department_name: "",
+          evaluation_criteria: "",
+          key_points: "",
+          sop_sip: "",
+          work_item_sop_img: [],
         };
 
-    allCourses = courses;
     showModal.value = true;
   };
 
@@ -107,7 +124,7 @@
   const viewCourseDetail = async (courseId) => {
     try {
       const response = await axios.get(`/api/courses?course_id=${courseId}`);
-      openModal("edit", response.data, courses.value);
+      openModal("edit", response.data);
     } catch (error) {
       console.error("無法獲取課程詳細資料:", error);
       alert("查看課程詳細資料失敗！");
@@ -117,23 +134,34 @@
   // 提交表單
   const handleModalSubmit = async (data) => {
     try {
-      const formData = new FormData(); // 使用 FormData 來支援檔案上傳
+      const fileUploadFormData = new FormData(); // 使用 FormData 來支援檔案上傳
 
       // 添加可修改的欄位
-      formData.append("course_name", data.course_name);
-      formData.append("training_type_name", data.training_type_name);
-      formData.append("work_item", data.work_item_name);
-      formData.append("unit_name", data.unit_name);
-      formData.append("department_name", data.department_name);
-      formData.append("evaluation_criteria", data.evaluation_criteria);
-      formData.append("key_points", data.key_points);
-      formData.append("sop_sip", data.sop_sip);
+      fileUploadFormData.append("course_name", data.course_name);
+      fileUploadFormData.append("training_type_name", data.training_type_name);
+      fileUploadFormData.append("work_item_name", data.work_item_name);
+      fileUploadFormData.append("unit_name", data.unit_name);
+      fileUploadFormData.append("department_name", data.department_name);
+      fileUploadFormData.append(
+        "evaluation_criteria",
+        data.evaluation_criteria
+      );
+      fileUploadFormData.append("key_points", data.key_points);
+      fileUploadFormData.append("sop_sip", data.sop_sip);
 
       // 添加上傳的檔案 (支援多個檔案)
-      if (data.uploadedFiles) {
-        data.uploadedFiles.forEach((fileObj, index) => {
-          formData.append(`uploadedFiles`, fileObj.file);
+      if (data.uploadedFiles && data.uploadedFiles.length > 0) {
+        data.uploadedFiles.forEach((file, index) => {
+          fileUploadFormData.append("uploadedFiles", file);
+          console.log(`Appending file ${index + 1}:`, file);
         });
+      } else {
+        console.warn("沒有上傳的檔案");
+      }
+
+      // 調試 FormData 的內容
+      for (let pair of fileUploadFormData.entries()) {
+        console.log(`${pair[0]}: ${pair[1]}`);
       }
 
       // 發送請求
@@ -141,47 +169,58 @@
         ? `/api/courses/${data.course_id}`
         : "/api/courses";
       const method = data.course_id ? "put" : "post";
-      // 將 FormData 轉換為 JSON 格式，方便查看to be removed
-      const formDataObject = {};
-      formData.forEach((value, key) => {
-        if (value instanceof File) {
-          formDataObject[key] = value.name; // 如果是檔案，只顯示檔名
-        } else {
-          formDataObject[key] = value; // 其他普通值
-        }
-      });
-      console.log("FormData as JSON:", formDataObject);
 
       await axios({
         method,
         url,
-        data: formData,
+        data: fileUploadFormData,
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       closeModal();
       getCourses(); // 重新加載課程列表
+      alert("提交課程資料成功！");
     } catch (error) {
       console.error("提交表單失敗:", error);
-
       alert("提交課程資料失敗！");
     }
   };
 
   // 刪除課程
-  const deleteCourse = async (courseId) => {
-    try {
-      await axios.delete(`/api/courses/${courseId}`);
-      getCourses();
-    } catch (error) {
-      console.error("刪除課程失敗:", error);
-      alert("刪除課程失敗！");
+  const deleteCourse = async () => {
+    if (button_type.value === "new") {
+      alert("新增測驗題目");
+      return;
+    } else {
+      try {
+        await axios.delete(`/api/courses?course_id=${data.course_id}`);
+        getCourses();
+      } catch (error) {
+        console.error("刪除課程失敗:", error);
+        alert("刪除課程失敗！");
+      }
+    }
+  };
+  const button_name = () => {
+    if (route.name === "course-table") {
+      edit_button_name.value = "上傳/修改詳細資料";
+      delete_button_name.value = "刪除";
+      button_type.value = "delete";
+    } else if (route.name === "course-table-view") {
+      edit_button_name.value = "查看詳細資料";
+      delete_button_name.value = "新增測驗題目";
+      button_type.value = "new";
+    } else {
+      edit_button_name.value = "查看詳細資料";
+      delete_button_name.value = "新增評核項目";
+      button_type.value = "new";
     }
   };
 
   // 初始化
   onMounted(() => {
     getCourses();
+    button_name();
   });
 </script>
 
