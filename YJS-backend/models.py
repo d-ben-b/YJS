@@ -8,7 +8,7 @@ db = SQLAlchemy()
 class User(db.Model):
     __tablename__ = 'user'
 
-    user_id = db.Column(db.Integer, primary_key=True,default=0)
+    user_id = db.Column(db.Integer, primary_key=True, default=0)
     user_name = db.Column(db.String(30), nullable=False)
     gender = db.Column(db.String(10), nullable=False)
     country = db.Column(db.String(30), nullable=False)
@@ -19,10 +19,9 @@ class User(db.Model):
         'department.department_id'), nullable=False)
     unit_id = db.Column(db.Integer, db.ForeignKey(
         'unit.unit_id'), nullable=False)
-    department = db.relationship('Department', backref=db.backref(
-        'user', lazy='joined'))   # 指向 Department class
-    unit = db.relationship('Unit', backref=db.backref(
-        'user', lazy='joined'))   # 指向 Unit class
+    department = db.relationship(
+        'Department', backref=db.backref('users', lazy='joined'))
+    unit = db.relationship('Unit', backref=db.backref('users', lazy='joined'))
 
     def __repr__(self):
         return f'<User {self.user_name}>'
@@ -58,6 +57,10 @@ class Department(db.Model):
     department_id = db.Column(db.Integer, primary_key=True)
     department_name = db.Column(db.String(30), nullable=False)
 
+    # 添加 order_by 參數
+    units = db.relationship('Unit', backref='department',
+                            lazy='joined', order_by='Unit.unit_id.asc()')
+
     def __repr__(self):
         return f'<Department {self.department_name}>'
 
@@ -69,10 +72,12 @@ class Unit(db.Model):
     department_id = db.Column(db.Integer, db.ForeignKey(
         'department.department_id'), nullable=False)
 
+    # 添加 order_by 參數
+    workstations = db.relationship(
+        'Workstation', backref='unit', lazy='joined', order_by='Workstation.work_station_id.asc()')
+
     def __repr__(self):
         return f'<Unit {self.unit_name}>'
-
-# 定義 Role 表
 
 
 class Role(db.Model):
@@ -87,8 +92,6 @@ class Role(db.Model):
 
     def __repr__(self):
         return f'<Role {self.role_name}>'
-
-# 定義 Training 表
 
 
 class Training(db.Model):
@@ -107,23 +110,20 @@ class Training(db.Model):
     training_type = db.relationship(
         'TrainingType', backref='trainings', lazy=True)
     work_item = db.relationship('WorkItem', backref='trainings', lazy=True)
-    
-
-# 定義 WorkItem 表
 
 
 class WorkItem(db.Model):
     __tablename__ = 'work_item'
     work_item_id = db.Column(db.Integer, primary_key=True)
     work_item_name = db.Column(db.String(30), nullable=False)
-    work_station_id = db.Column(db.Integer, nullable=False)
+    work_station_id = db.Column(db.Integer, db.ForeignKey(
+        'workstation.work_station_id'), nullable=False)
     work_item_sop = db.Column(db.String(30), nullable=True, comment="SOP/SIP")
     work_item_sop_img = db.Column(BLOB, nullable=True, comment="SOP/SIP圖片")
     work_item_points = db.Column(db.String(300), nullable=True, comment="教學重點")
     work_item_standards = db.Column(
         db.String(300), nullable=True, comment="評量項目與標準")
 
-    # 新增與 WorkItemImage 的關聯
     images = db.relationship(
         'WorkItemImage', back_populates='work_item', cascade='all, delete-orphan')
 
@@ -133,32 +133,45 @@ class WorkItem(db.Model):
 
 class WorkItemImage(db.Model):
     __tablename__ = 'work_item_image'
+
     id = db.Column(db.Integer, primary_key=True)
     work_item_id = db.Column(db.Integer, db.ForeignKey(
         'work_item.work_item_id'), nullable=False)
     image_data = db.Column(db.LargeBinary, nullable=False)
     filename = db.Column(db.String(255), nullable=True, default='Image')
 
-    # 回到 WorkItem 表的關聯
     work_item = db.relationship('WorkItem', back_populates='images')
 
     def __repr__(self):
         return f'<WorkItemImage {self.id}>'
 
 
+class Workstation(db.Model):
+    __tablename__ = 'workstation'
 
-# 定義 TrainingType 表
+    work_station_id = db.Column(db.Integer, primary_key=True)
+    work_station_name = db.Column(db.String(30), nullable=False)
+    unit_id = db.Column(db.Integer, db.ForeignKey(
+        'unit.unit_id'), nullable=False)
+
+    # 添加 order_by 參數
+    workitems = db.relationship('WorkItem', backref='workstation', cascade='all, delete-orphan',
+                                lazy='joined', order_by='WorkItem.work_item_id.asc()')
+
+    def __repr__(self):
+        return f'<Workstation {self.work_station_name}>'
 
 
 class TrainingType(db.Model):
     __tablename__ = 'training_type'
+
     training_type_id = db.Column(db.Integer, primary_key=True)
     training_type_name = db.Column(db.String(30), nullable=False)
 
     def __repr__(self):
         return f'<TrainingType {self.training_type_name}>'
 
-# 定義 Course 表
+
 class Course(db.Model):
     __tablename__ = 'course'
 
@@ -177,6 +190,8 @@ class Course(db.Model):
     work_item_id = db.Column(db.Integer, db.ForeignKey(
         'work_item.work_item_id'), nullable=False)
 
-    # 新增 relationship
     user = db.relationship('User', backref='courses', lazy=True)
     work_item = db.relationship('WorkItem', backref='courses', lazy=True)
+
+    def __repr__(self):
+        return f'<Course {self.course_name}>'

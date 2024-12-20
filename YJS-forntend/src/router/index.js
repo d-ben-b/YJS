@@ -3,6 +3,7 @@ import TrainContent from "@/views/TrainContent.vue";
 import CourseTable from "@/views/CourseTable.vue";
 import NotFoundComponent from "@/components/NotFoundComponent.vue";
 import Content from "@/views/Content.vue";
+import QuizDesign from "@/views/QuizDesign.vue";
 
 const routes = [
   { path: "/", component: "", meta: { breadcrumb: "首頁" } },
@@ -42,6 +43,12 @@ const routes = [
             name: "course-table-view",
             component: CourseTable,
             meta: { breadcrumb: "查看課程列表" },
+          },
+          {
+            path: "quiz-design",
+            name: "quiz-design",
+            component: QuizDesign,
+            meta: { breadcrumb: "隨堂測驗題目設計" },
           },
         ],
       },

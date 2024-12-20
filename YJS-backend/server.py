@@ -1,7 +1,9 @@
 from flask_cors import CORS
-from flask import Flask, jsonify, request, make_response
-from models import db, Course, Role, WorkItem, TrainingType, User, Account, Department, Unit, WorkItemImage
+from flask import Flask, jsonify, request, make_response,Blueprint
+from models import db, Course, Role, WorkItem, TrainingType, User, Account, Department, Unit, WorkItemImage, Workstation
 import base64
+
+menus_bp = Blueprint('menus', __name__)
 
 # 初始化 Flask 應用和資料庫
 server = Flask(__name__)
@@ -332,6 +334,56 @@ def delete_work_item_image():
     db.session.delete(img)
     db.session.commit()
     return jsonify({'message': '圖片刪除成功'}), 200
+
+@server.route('/api/menus', methods=['GET'])
+def get_menus():
+    try:
+        # 使用 joinedload 進行關聯預加載，減少查詢次數
+        departments = Department.query.options(
+            db.joinedload(Department.units)
+            .joinedload(Unit.workstations)
+            .joinedload(Workstation.workitems)
+        ).order_by(Department.department_id.asc()).all()
+
+        def build_dept_dict(dept):
+            return {
+                "id": dept.department_id,
+                "title": dept.department_name,
+                "route": f"/departments/{dept.department_id}",
+                "children": [build_unit_dict(unit, dept.department_id) for unit in dept.units]
+            }
+
+        def build_unit_dict(unit, dept_id):
+            return {
+                "id": unit.unit_id,
+                "title": unit.unit_name,
+                "route": f"/departments/{dept_id}/units/{unit.unit_id}",
+                "children": [build_ws_dict(ws, dept_id, unit.unit_id) for ws in unit.workstations]
+            }
+
+        def build_ws_dict(ws, dept_id, unit_id):
+            return {
+                "id": ws.work_station_id,
+                "title": ws.work_station_name,
+                "route": f"/departments/{dept_id}/units/{unit_id}/workstations/{ws.work_station_id}",
+                "children": [build_wi_dict(wi, dept_id, unit_id, ws.work_station_id) for wi in ws.workitems]
+            }
+
+        def build_wi_dict(wi, dept_id, unit_id, ws_id):
+            return {
+                "id": wi.work_item_id,
+                "title": wi.work_item_name,
+                "route": f"/departments/{dept_id}/units/{unit_id}/workstations/{ws_id}/workitems/{wi.work_item_id}",
+                "children": []
+            }
+
+        menu_tree = [build_dept_dict(dept) for dept in departments]
+
+        return jsonify(menu_tree), 200
+
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "伺服器錯誤"}), 500
 
 
 @server.route('/api/toggle_account', methods=['POST'])
