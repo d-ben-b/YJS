@@ -8,9 +8,8 @@
     </ul>
   </li>
 </template>
-
 <script setup>
-  import { defineProps, computed } from "vue";
+  import { computed } from "vue";
   import MenuItem from "./MenuItem.vue"; // 遞迴引入自己
 
   const props = defineProps({

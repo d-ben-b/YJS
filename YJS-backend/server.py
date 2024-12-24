@@ -1,3 +1,34 @@
+"""
+This module defines a Flask application with several API routes for managing courses, work items, images, and user accounts.
+Blueprints:
+- menus_bp: Blueprint for menu-related routes.
+Flask Application:
+- server: The main Flask application instance.
+Configurations:
+- SQLALCHEMY_DATABASE_URI: Database connection URI.
+- SQLALCHEMY_TRACK_MODIFICATIONS: Disable modification tracking.
+- MAX_CONTENT_LENGTH: Maximum upload file size (16MB).
+Functions:
+- allowed_file(filename): Check if the file extension is allowed.
+- format_course(course): Format course data into a dictionary.
+API Routes:
+- /api/courses [GET]: Get a list of courses or details of a single course.
+- /api/all_values [GET]: Get unique values for specified fields.
+- /api/courses/<int:course_id> [DELETE]: Delete a specified course.
+- /api/courses/<int:course_id> [PUT]: Update a specified course, including file upload handling.
+- /api/courses [POST]: Create a new course, including file upload handling.
+- /api/work_item_images [GET]: Get images by work item ID.
+- /api/work_item_image [GET]: Get a single work item image by ID.
+- /api/work_item_image [DELETE]: Delete a single work item image by ID.
+- /api/menus [GET]: Get a hierarchical menu structure of departments, units, workstations, and work items.
+- /api/toggle_account [POST]: Enable or disable a user account.
+- /api/change_password [POST]: Change the password of a user account.
+- /api/get_list [GET]: Get a list of users based on role name.
+Error Handling:
+- Returns JSON error messages and appropriate HTTP status codes for various exceptions.
+Initialization:
+- Creates database tables if they do not exist when the application starts.
+"""
 from flask_cors import CORS
 from flask import Flask, jsonify, request, make_response,Blueprint
 from models import db, Course, Role, WorkItem, TrainingType, User, Account, Department, Unit, WorkItemImage, Workstation
@@ -335,6 +366,7 @@ def delete_work_item_image():
     db.session.commit()
     return jsonify({'message': '圖片刪除成功'}), 200
 
+#
 @server.route('/api/menus', methods=['GET'])
 def get_menus():
     try:
@@ -368,7 +400,7 @@ def get_menus():
                 "route": f"/departments/{dept_id}/units/{unit_id}/workstations/{ws.work_station_id}",
                 "children": [build_wi_dict(wi, dept_id, unit_id, ws.work_station_id) for wi in ws.workitems]
             }
-
+            
         def build_wi_dict(wi, dept_id, unit_id, ws_id):
             return {
                 "id": wi.work_item_id,
