@@ -13,8 +13,6 @@ class User(db.Model):
     gender = db.Column(db.String(10), nullable=False)
     country = db.Column(db.String(30), nullable=False)
     account_enabled = db.Column(db.Boolean, default=False)
-    role_id = db.Column(db.Integer, db.ForeignKey(
-        'role.role_id'), nullable=False)
     department_id = db.Column(db.Integer, db.ForeignKey(
         'department.department_id'), nullable=False)
     unit_id = db.Column(db.Integer, db.ForeignKey(
@@ -87,7 +85,6 @@ class Role(db.Model):
     role_name = db.Column(db.String(30), nullable=False)
     role_type = db.Column(db.String(30), nullable=False)
 
-    users = db.relationship('User', backref='role')
     courses = db.relationship('Course', backref='role', lazy=True)
 
     def __repr__(self):
