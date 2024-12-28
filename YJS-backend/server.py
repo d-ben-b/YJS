@@ -31,7 +31,8 @@ Initialization:
 """
 from flask_cors import CORS
 from flask import Flask, jsonify, request, make_response,Blueprint
-from models import db, Course, Role, WorkItem, TrainingType, User, Account, Department, Unit, WorkItemImage, Workstation
+from models import db, Course, Role, WorkItem, TrainingType, User, Account, \
+    Department, Unit, WorkItemImage, Workstation, Quiz
 import base64
 
 menus_bp = Blueprint('menus', __name__)
@@ -416,6 +417,145 @@ def get_menus():
     except Exception as e:
         print(e)
         return jsonify({"error": "伺服器錯誤"}), 500
+
+@server.route('/api/work_items/<int:work_item_id>', methods=['GET'])
+def get_work_item(work_item_id):
+    """
+    獲取指定工作項目的詳細數據，包括 SOP、教學重點、評量標準以及圖片。
+    """
+    try:
+        # 獲取工作項目數據
+        work_item = WorkItem.query.get(work_item_id)
+        if not work_item:
+            return jsonify({'error': f'找不到 ID 為 {work_item_id} 的工作項目'}), 404
+
+        # 格式化工作項目數據
+        work_item_data = {
+            'work_item_id': work_item.work_item_id,
+            'work_item_name': work_item.work_item_name,
+            'sop_sip': work_item.work_item_sop or '',
+            'key_points': work_item.work_item_points or '',
+            'evaluation_criteria': work_item.work_item_standards or '',
+            'images': [base64.b64encode(img.image_data).decode('utf-8') for img in work_item.images]
+        }
+
+        return jsonify(work_item_data), 200
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({'error': str(e)}), 500
+
+@server.route("/api/quiz", methods=["POST"])
+def create_quiz():
+    """
+    創建 Quiz，如果已存在則返回已存在的 Quiz。
+    """
+    try:
+        work_item_id = request.json.get("work_item_id")
+        quiz_type = request.json.get("type", "choice")  # 默認題型為選擇題
+        if not work_item_id:
+            return jsonify({"error": "缺少 work_item_id"}), 400
+
+        # 檢查是否已有 Quiz
+        quiz = Quiz.query.filter_by(work_item_id=work_item_id).first()
+        if quiz:
+            return jsonify({"message": "Quiz 已存在", "quiz_id": quiz.id}), 200
+
+        # 創建新 Quiz
+        quiz = Quiz(
+            name=f"Quiz for work_item {work_item_id}",
+            work_item_id=work_item_id,
+            type=quiz_type,
+            options=[] if quiz_type == "choice" else None,
+            answer="" if quiz_type == "question" else None,
+        )
+        db.session.add(quiz)
+        db.session.commit()
+
+        return jsonify({"message": "Quiz 創建成功", "quiz_id": quiz.id, "type": quiz.type}), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@server.route("/api/quiz/<int:quiz_id>", methods=["PUT"])
+def update_quiz(quiz_id):
+    """
+    更新 Quiz 的數據，支持選擇題和問答題。
+    """
+    try:
+        data = request.json
+        quiz = Quiz.query.get(quiz_id)
+        if not quiz:
+            return jsonify({"error": "Quiz 不存在"}), 404
+
+        if quiz.type == "choice":
+            options = data.get("options", [])
+            if not options:
+                return jsonify({"error": "缺少選項數據"}), 400
+            quiz.options = options
+        elif quiz.type == "question":
+            answer = data.get("answer", "")
+            quiz.answer = answer
+
+        db.session.commit()
+        return jsonify({"message": f"Quiz 更新成功 ({quiz.type})"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@server.route('/api/quizzes', methods=['GET', 'POST'])
+def manage_quizzes():
+    if request.method == 'GET':
+        # 現有的獲取 Quizzes 的邏輯
+        work_item_id = request.args.get('work_item_id', type=int)
+        try:
+            if work_item_id:
+                quizzes = Quiz.query.filter_by(work_item_id=work_item_id).all()
+            else:
+                quizzes = Quiz.query.all()
+
+            return jsonify([{
+                "id": quiz.id,
+                "name": quiz.name,
+                "type": quiz.type,
+                "options": quiz.options if quiz.type == "choice" else None,
+                "answer": quiz.answer if quiz.type == "question" else None,
+            } for quiz in quizzes])
+        except Exception as e:
+            print("Error:", str(e))
+            return jsonify({"error": str(e)}), 500
+
+    elif request.method == 'POST':
+        # 添加 Quiz 的邏輯
+        data = request.json
+        try:
+            work_item_id = data.get('work_item_id')
+            name = data.get('name', f"Quiz for work_item {work_item_id}")
+            quiz_type = data.get('type', 'choice')
+            options = data.get('options', []) if quiz_type == 'choice' else None
+            answer = data.get('answer', '') if quiz_type == 'question' else None
+
+            if not work_item_id:
+                return jsonify({"error": "缺少 work_item_id"}), 400
+
+            new_quiz = Quiz(
+                name=name,
+                work_item_id=work_item_id,
+                type=quiz_type,
+                options=options,
+                answer=answer
+            )
+            print(new_quiz)
+            db.session.add(new_quiz)
+            db.session.commit()
+
+            return jsonify({"message": "Quiz 創建成功", "quiz_id": new_quiz.id}), 201
+        except Exception as e:
+            db.session.rollback()
+            print("Error:", str(e))
+            return jsonify({"error": str(e)}), 500
+
+
 
 
 @server.route('/api/toggle_account', methods=['POST'])

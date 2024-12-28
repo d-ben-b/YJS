@@ -8,7 +8,11 @@
         >
         <button class="close-btn" @click="show = !show">✖</button>
         <ul>
-          <MenuItem v-for="menu in menus" :key="menu.id" :item="menu" />
+          <MenuItem
+            v-for="menu in menus"
+            :key="menu.id"
+            :item="menu"
+            @select-item="(id, path) => handleSelectItem(id, path)" />
         </ul>
       </div>
       <div v-if="error" class="error">{{ error }}</div>
@@ -26,9 +30,15 @@
   const error = ref(null);
   const show = ref(true);
 
+  const emit = defineEmits(["select-item"]);
+
+  const handleSelectItem = (workItemId, pathArray) => {
+    emit("select-item", workItemId, pathArray);
+  };
+
   const fetchMenus = async () => {
     try {
-      const response = await axios.get("/api/menus"); // 更新為您的 API URL
+      const response = await axios.get("/api/menus");
       menus.value = response.data.map((dept) => ({
         ...dept,
         open: false,
@@ -41,7 +51,7 @@
             children: ws.children.map((wi) => ({
               ...wi,
               open: false,
-              children: [], // 最下層不再有子項目
+              children: [],
             })),
           })),
         })),

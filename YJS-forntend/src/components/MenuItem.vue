@@ -1,16 +1,23 @@
 <template>
   <li>
-    <div class="menu-item" :class="isOpen" @click="toggle">
+    <div class="menu-item" :class="isOpen" @click="handleClick">
       <i v-if="hasChildren" :class="iconClass"></i> {{ item.title }}
     </div>
     <ul v-if="hasChildren && item.open">
-      <MenuItem v-for="child in item.children" :key="child.id" :item="child" />
+      <MenuItem
+        v-for="child in item.children"
+        :key="child.id"
+        :item="child"
+        @select-item="
+          (id, path) => emitSelectItem(id, [...path, item.title])
+        " />
     </ul>
   </li>
 </template>
+
 <script setup>
   import { computed } from "vue";
-  import MenuItem from "./MenuItem.vue"; // 遞迴引入自己
+  import MenuItem from "./MenuItem.vue";
 
   const props = defineProps({
     item: {
@@ -19,11 +26,12 @@
     },
   });
 
-  const hasChildren = computed(() => {
-    return props.item.children && props.item.children.length > 0;
-  });
+  const emit = defineEmits(["select-item"]);
 
-  // 設定圖示類別，根據是否有子項目決定
+  const hasChildren = computed(
+    () => props.item.children && props.item.children.length > 0
+  );
+
   const iconClass = computed(() => {
     if (hasChildren.value) {
       return props.item.open ? "fas fa-folder-open" : "fas fa-folder";
@@ -31,21 +39,18 @@
     return "fas fa-file";
   });
 
-  const isOpen = computed(() => {
-    if (props.item.open) {
-      return props.item.open ? "open" : "close";
-    }
-    return "close";
-  });
+  const isOpen = computed(() => (props.item.open ? "open" : "close"));
 
-  // 切換展開狀態
-  const toggle = () => {
-    if (hasChildren.value) {
-      if (!props.item.hasOwnProperty("open")) {
-        props.item.open = false;
-      }
+  const handleClick = () => {
+    if (!hasChildren.value) {
+      emit("select-item", props.item.id, [props.item.title]);
+    } else {
       props.item.open = !props.item.open;
     }
+  };
+
+  const emitSelectItem = (id, path) => {
+    emit("select-item", id, path);
   };
 </script>
 

@@ -1,6 +1,11 @@
 <template>
-  <RightSideBar />
+  <RightSideBar @select-item="handleSelectItem" />
   <div class="quiz-design">
+    <!-- 動態路徑顯示 -->
+    <div class="breadcrumb">
+      {{ breadcrumb }}
+    </div>
+
     <h2>SOP/SIP 設計</h2>
 
     <!-- SOP/SIP -->
@@ -16,7 +21,6 @@
           :key="index"
           class="image-container">
           <img :src="image.url" alt="Uploaded Image" />
-          <button @click="removeImage(index)">×</button>
         </div>
         <label class="upload-button">
           <input type="file" accept="image/*" @change="handleImageUpload" />
@@ -43,24 +47,206 @@
         rows="4"></textarea>
     </div>
 
-    <!-- 提交按鈕 -->
-    <button class="submit-button" @click="submitQuiz">提交</button>
+    <!-- 圖片選項部分 -->
+    <div class="section">
+      <h3>選擇題</h3>
+      <div class="quiz-list">
+        <div
+          v-for="(quizItem, index) in choiceQuizzes"
+          :key="index"
+          class="quiz-item">
+          <p><strong>題目：</strong> {{ quizItem.name }}</p>
+          <ul class="options">
+            <li v-for="(option, optIndex) in quizItem.options" :key="optIndex">
+              {{ optIndex + 1 }} {{ option }}
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="new-quiz">
+        <input
+          type="text"
+          v-model="newChoiceQuiz.question"
+          placeholder="輸入題目"
+          class="quiz-input" />
+        <div
+          v-for="(option, index) in newChoiceQuiz.options"
+          :key="index"
+          class="option-item">
+          <input
+            type="text"
+            v-model="option.text"
+            placeholder="輸入選項"
+            class="option-input" />
+          <BaseButton
+            buttonType="delete"
+            @click="removeOption(index)"
+            class="delete">
+            刪除選項
+          </BaseButton>
+        </div>
+        <BaseButton buttonType="new" @click="addOption">新增選項</BaseButton>
+        <BaseButton
+          buttonType="new"
+          :buttonBackground="true"
+          @click="saveChoiceQuiz('choice')">
+          新增選擇題
+        </BaseButton>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>問答題</h3>
+      <div class="quiz-list">
+        <div
+          v-for="(quizItem, index) in questionQuizzes"
+          :key="index"
+          class="quiz-item">
+          <p><strong>題目：</strong> {{ quizItem.name }}</p>
+          <p><strong>答案：</strong> {{ quizItem.answer }}</p>
+        </div>
+      </div>
+      <div class="new-quiz">
+        <input
+          type="text"
+          v-model="newQuestionQuiz.question"
+          placeholder="輸入題目"
+          class="quiz-input" />
+        <input
+          type="text"
+          v-model="newQuestionQuiz.answer"
+          placeholder="輸入參考解答"
+          class="quiz-input" />
+        <BaseButton
+          buttonType="new"
+          :buttonBackground="true"
+          @click="saveChoiceQuiz('question')">
+          新增選擇題
+        </BaseButton>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-  import { ref, onMounted } from "vue";
+  import { ref } from "vue";
+  import axios from "axios";
+  import BaseButton from "@/components/Button/BaseButton.vue";
   import RightSideBar from "@/components/RightSideBar.vue";
 
+  // 表單數據
   const quiz = ref({
     sop: "",
     keyPoints: "",
     evaluation: "",
+    type: "",
+  });
+
+  const newChoiceQuiz = ref({
+    question: "",
+    options: [{ text: "" }],
+  });
+  const newQuestionQuiz = ref({
+    question: "",
+    answer: "",
   });
 
   const images = ref([]);
-  const first_time_view = ref(true);
+  const quizzes = ref([]);
+  const choiceQuizzes = ref([]);
+  const questionQuizzes = ref([]);
+  const currentWorkItemId = ref(0);
 
+  // 動態路徑顯示
+  const breadcrumb = ref("部門 > 單位 > 工作項目");
+
+  const addOption = () => {
+    newChoiceQuiz.value.options.push({ text: "" });
+  };
+
+  const removeOption = (index) => {
+    newChoiceQuiz.value.options.splice(index, 1);
+  };
+
+  const saveChoiceQuiz = async (type) => {
+    var submitData = null;
+    if (type === "choice") {
+      if (!newChoiceQuiz.value.question.trim()) {
+        alert("請輸入題目");
+        return;
+      }
+
+      if (
+        type === "choice" &&
+        newChoiceQuiz.value.options.some((option) => !option.text.trim())
+      ) {
+        alert("請輸入所有選項");
+        return;
+      }
+    } else {
+      if (!newQuestionQuiz.value.question.trim()) {
+        alert("請輸入題目");
+        return;
+      }
+    }
+
+    submitData = type === "choice" ? newChoiceQuiz : newQuestionQuiz;
+
+    try {
+      const response = await axios.post("/api/quizzes", {
+        work_item_id: currentWorkItemId.value,
+        name: submitData.value.question,
+        type: type,
+        options:
+          type === "choice"
+            ? submitData.value.options.map((option) => option.text)
+            : [],
+        answer: type === "question" ? submitData.value.answer : null,
+      });
+
+      alert("選擇題新增成功！");
+      await fetchQuizzesByWorkItem(currentWorkItemId.value);
+      submitData.value = {
+        question: "",
+        options: [{ text: "" }],
+      };
+    } catch (error) {
+      console.error("新增選擇題失敗：", error);
+      alert("無法新增選擇題，請稍後再試。");
+    }
+  };
+
+  // 當選擇工作項目時的處理函數
+  const handleSelectItem = async (workItemId, pathArray) => {
+    try {
+      // 確保只有有效的 workItemId 時進行請求
+      if (!workItemId) return;
+
+      currentWorkItemId.value = workItemId;
+
+      // 更新路徑顯示
+      breadcrumb.value = pathArray.join(" > ");
+
+      // 請求後端 API 獲取數據
+      const response = await axios.get(`/api/work_items/${workItemId}`);
+      const data = response.data;
+
+      quiz.value.sop = data.sop_sip || "";
+      quiz.value.keyPoints = data.key_points || "";
+      quiz.value.evaluation = data.evaluation_criteria || "";
+      images.value = (data.images || []).map((image) => ({
+        url: `data:image/png;base64,${image}`,
+      }));
+
+      // 獲取與 work_item_id 對應的 Quiz
+      await fetchQuizzesByWorkItem(workItemId);
+    } catch (err) {
+      console.error("Error loading work item data:", err);
+      alert("Error loading data. Please try again.");
+    }
+  };
+
+  // 上傳圖片
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -72,18 +258,22 @@
     }
   };
 
-  const removeImage = (index) => {
-    images.value.splice(index, 1);
-  };
+  const fetchQuizzesByWorkItem = async (workItemId) => {
+    try {
+      const response = await axios.get("/api/quizzes", {
+        params: { work_item_id: workItemId },
+      });
 
-  const submitQuiz = () => {
-    console.log("提交的資料:", {
-      sop: quiz.value.sop,
-      keyPoints: quiz.value.keyPoints,
-      evaluation: quiz.value.evaluation,
-      images: images.value,
-    });
-    alert("資料已提交！");
+      quizzes.value = response.data;
+      choiceQuizzes.value = quizzes.value.filter(
+        (quiz) => quiz.type === "choice" && quiz.options !== null
+      );
+      questionQuizzes.value = quizzes.value.filter(
+        (quiz) => quiz.type === "question" && quiz.answer !== null
+      );
+    } catch (error) {
+      console.error("無法加載 Quiz 資料：", error);
+    }
   };
 </script>
 
@@ -95,31 +285,58 @@
     font-family: Arial, sans-serif;
   }
 
-  .section {
+  .breadcrumb {
+    color: #666666;
+    font-family: Inter;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 24.2px;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+  }
+
+  .quiz-design .section {
     margin-bottom: 20px;
   }
 
-  textarea {
+  .quiz-design .section h3 {
+    line-height: 45px;
+    /* 與高度一致 */
+    width: 100%;
+    height: 45px;
+    border: 2px solid #e4e4e4;
+    background: #f5f5f5;
+    padding-left: 10px;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    box-sizing: border-box;
+    /* 確保邊框和內邊距一起計算 */
+  }
+
+  .quiz-design textarea {
     width: 100%;
     border: 1px solid #ddd;
     border-radius: 4px;
     padding: 10px;
     font-size: 14px;
+    box-sizing: border-box;
   }
 
-  .image-upload {
+  .quiz-design .image-upload {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-top: 10px;
   }
 
-  .image-container {
+  .quiz-design .image-container {
     position: relative;
     display: inline-block;
   }
 
-  .image-container img {
+  .quiz-design .image-container img {
     width: 100px;
     height: 100px;
     object-fit: cover;
@@ -127,20 +344,7 @@
     border-radius: 4px;
   }
 
-  .image-container button {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background-color: red;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 14px;
-    padding: 5px;
-  }
-
-  .upload-button {
+  .quiz-design .upload-button {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -151,11 +355,45 @@
     cursor: pointer;
   }
 
-  .upload-button input {
+  .quiz-design .upload-button input {
     display: none;
   }
 
-  .submit-button {
+  .quiz-design .option-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .quiz-design .option-item input {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+    font-size: 14px;
+    border: 2px solid #c6c6c6;
+    width: 150px;
+    height: 35px;
+    top: 354px;
+    box-sizing: border-box;
+  }
+
+  .quiz-design .add-option-button,
+  .quiz-design .remove-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .quiz-design .remove-button {
+    background-color: #d9534f;
+  }
+
+  .quiz-design .submit-button {
     width: 100%;
     padding: 10px;
     background-color: #007bff;
@@ -166,7 +404,81 @@
     cursor: pointer;
   }
 
-  .submit-button:hover {
+  .quiz-design .submit-button:hover {
     background-color: #0056b3;
+  }
+
+  .quiz-list {
+    margin-bottom: 20px;
+  }
+
+  .quiz-item {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  .quiz-item .options {
+    display: flex;
+    list-style-type: none;
+  }
+  .quiz-design .quiz-item ul li::before {
+    content: "";
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 12px;
+    height: 12px;
+    left: 10px;
+    background-image: url("@/assets/dot.png");
+    background-size: cover;
+    transform: translateY(-50%);
+  }
+
+  .new-quiz {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+
+  .quiz-input,
+  .option-input {
+    width: 625px;
+    height: 35px;
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 2px solid #c6c6c6;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+
+  .add-option-button,
+  .remove-option-button,
+  .save-quiz-button {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .delete {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 21.78px;
+    text-align: center;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    width: 129px;
+    height: 35px;
+    border: 2px solid #df0f10;
+  }
+
+  .save-quiz-button {
+    background-color: #28a745;
+    color: white;
+    margin-top: 10px;
   }
 </style>

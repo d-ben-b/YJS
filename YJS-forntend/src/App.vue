@@ -26,6 +26,7 @@
   }
 
   nav-bar {
+    position: sticky;
     flex: 0 0 20%;
   }
 

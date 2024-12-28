@@ -91,6 +91,20 @@ class Role(db.Model):
         return f'<Role {self.role_name}>'
 
 
+class Quiz(db.Model):
+    __tablename__ = "quizs"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    work_item_id = db.Column(db.Integer, nullable=False)
+    # 題型: "choice" 或 "question"
+    type = db.Column(db.String(50), nullable=False)
+    options = db.Column(db.JSON, nullable=True)  # 選項 (選擇題)
+    answer = db.Column(db.String(255), nullable=True)  # 答案 (問答題)
+
+    def __repr__(self):
+        return f'<Quiz {self.name}>'
+
+
 class Training(db.Model):
     __tablename__ = 'training'
 
