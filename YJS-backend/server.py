@@ -321,6 +321,31 @@ def create_course():
 
 @server.route('/api/work_item_images', methods=['GET'])
 def get_work_item_images_by_work_item_id():
+    """
+        根據 work_item_id 獲取工作項目的圖片
+        路由:
+            GET /api/work_item_images
+        參數:
+            work_item_id (int): 工作項目ID，通過查詢參數傳遞
+        返回:
+            JSON:
+                成功時返回圖片URL列表:
+                {
+                    'images': [
+                        'http://example.com/api/work_item_image?id=1',
+                        'http://example.com/api/work_item_image?id=2',
+                        ...
+                    ]
+                }
+                如果沒有找到圖片記錄，返回空列表:
+                {
+                    'images': []
+                }
+                如果缺少 work_item_id 參數，返回錯誤信息:
+                {
+                    'error': '缺少 work_item_id 參數'
+                }
+    """
     work_item_id = request.args.get('work_item_id', type=int)
     if not work_item_id:
         return jsonify({'error': '缺少 work_item_id 參數'}), 400
@@ -339,6 +364,16 @@ def get_work_item_images_by_work_item_id():
 
 @server.route('/api/work_item_image', methods=['GET'])
 def get_work_item_image():
+    """
+    獲取工作項目圖片。
+    從請求參數中獲取圖片 ID，並返回對應的圖片數據。
+    請求參數:
+    - id (int): 圖片的 ID。
+    返回:
+    - 成功時返回包含圖片數據的響應，Content-Type 為 'image/png'。
+    - 如果缺少 id 參數，返回包含錯誤信息的 JSON 響應，狀態碼為 400。
+    - 如果圖片未找到或圖片數據不存在，返回包含錯誤信息的 JSON 響應，狀態碼為 404。
+    """
     image_id = request.args.get('id', type=int)
     if not image_id:
         return jsonify({'error': '缺少 id 參數'}), 400
@@ -355,6 +390,19 @@ def get_work_item_image():
 #定義刪除圖片的API路由
 @server.route('/api/work_item_image', methods=['DELETE'])
 def delete_work_item_image():
+    """
+    刪除工作項目圖片。
+    從請求參數中獲取圖片的 ID，並刪除對應的圖片記錄。
+    請求參數:
+        id (int): 圖片的 ID。
+    返回:
+        JSON: 包含操作結果的 JSON 響應。
+        HTTP 狀態碼:
+            200: 圖片刪除成功。
+            400: 缺少 id 參數。
+            404: 圖片未找到。
+    """
+    
     image_id = request.args.get('id', type=int)
     if not image_id:
         return jsonify({'error': '缺少 id 參數'}), 400
@@ -367,9 +415,17 @@ def delete_work_item_image():
     db.session.commit()
     return jsonify({'message': '圖片刪除成功'}), 200
 
-# 
 @server.route('/api/menus', methods=['GET'])
 def get_menus():
+    """
+    獲取部門、單位、工作站和工作項目的層次結構菜單。
+    該函數查詢數據庫以獲取所有部門及其相關的單位、工作站和工作項目，使用 joinedload 減少查詢次數。
+    然後構建表示層次結構的嵌套字典結構，並將其作為 JSON 響應返回。
+    返回:
+        tuple: 包含菜單樹的 JSON 表示和 HTTP 狀態碼的元組。
+               成功時，返回 (jsonify(menu_tree), 200)。
+               失敗時，返回 (jsonify({"error": "伺服器錯誤"}), 500)。
+    """
     try:
         # 使用 joinedload 進行關聯預加載，減少查詢次數
         departments = Department.query.options(
@@ -480,7 +536,7 @@ def create_quiz():
 @server.route("/api/quiz/<int:quiz_id>", methods=["PUT"])
 def update_quiz(quiz_id):
     """
-    更新 Quiz 的數據，支持選擇題和問答題。
+    更新 Quiz 的數據，支持選擇題、問答題以及狀態。
     """
     try:
         data = request.json
@@ -488,14 +544,28 @@ def update_quiz(quiz_id):
         if not quiz:
             return jsonify({"error": "Quiz 不存在"}), 404
 
+        # 更新選擇題的選項
         if quiz.type == "choice":
             options = data.get("options", [])
             if not options:
                 return jsonify({"error": "缺少選項數據"}), 400
             quiz.options = options
+
+        # 更新問答題的答案
         elif quiz.type == "question":
             answer = data.get("answer", "")
             quiz.answer = answer
+
+        # 更新狀態（通過/保留/不通過）
+        status = data.get("status", "")
+        print("Received status:", status)
+        if status:
+            quiz.status = status
+
+        # 更新不通過的原因（如果有）
+        reason = data.get("reason", "")
+        if quiz.status == "不通過" and reason:
+            quiz.reason = reason
 
         db.session.commit()
         return jsonify({"message": f"Quiz 更新成功 ({quiz.type})"}), 200
@@ -503,8 +573,27 @@ def update_quiz(quiz_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @server.route('/api/quizzes', methods=['GET', 'POST'])
 def manage_quizzes():
+    """
+    Manage quizzes by handling both retrieval and creation of quiz items.
+    GET behavior:
+        - If a 'work_item_id' parameter is provided, retrieves quizzes filtered by that ID.
+        - Otherwise, retrieves all quizzes.
+        - Returns a JSON list of quiz details or an error JSON object with a 500 status code on failure.
+    POST behavior:
+        - Expects a JSON payload containing:
+            - 'work_item_id': Identifies which work item the quiz belongs to (required).
+            - 'name': (Optional) Defaults to "Quiz for work_item {work_item_id}" if not provided.
+            - 'type': (Optional) Defaults to 'choice' if not provided.
+            - 'options': (Optional, list) Only applicable if 'type' is 'choice'.
+            - 'answer': (Optional, string) Only applicable if 'type' is 'question'.
+        - Creates a new quiz record in the database.
+        - Returns a success message and the newly created quiz ID; or an error JSON object with a 500 status code on failure.
+        - For GET: A JSON list of existing quizzes or an error object with HTTP status.
+        - For POST: A JSON response indicating success or an error object with HTTP status.
+    """
     if request.method == 'GET':
         # 現有的獲取 Quizzes 的邏輯
         work_item_id = request.args.get('work_item_id', type=int)
@@ -520,6 +609,8 @@ def manage_quizzes():
                 "type": quiz.type,
                 "options": quiz.options if quiz.type == "choice" else None,
                 "answer": quiz.answer if quiz.type == "question" else None,
+                "status": quiz.status,
+                "reason": quiz.reason
             } for quiz in quizzes])
         except Exception as e:
             print("Error:", str(e))
@@ -537,7 +628,7 @@ def manage_quizzes():
 
             if not work_item_id:
                 return jsonify({"error": "缺少 work_item_id"}), 400
-
+            
             new_quiz = Quiz(
                 name=name,
                 work_item_id=work_item_id,
@@ -554,9 +645,6 @@ def manage_quizzes():
             db.session.rollback()
             print("Error:", str(e))
             return jsonify({"error": str(e)}), 500
-
-
-
 
 @server.route('/api/toggle_account', methods=['POST'])
 def toggle_account():

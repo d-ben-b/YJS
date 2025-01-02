@@ -50,6 +50,12 @@ const routes = [
             component: QuizDesign,
             meta: { breadcrumb: "隨堂測驗題目設計" },
           },
+          {
+            path: "quiz-design-review",
+            name: "quiz-design-review",
+            component: QuizDesign,
+            meta: { breadcrumb: "隨堂測驗表規劃與審核" },
+          },
         ],
       },
       {

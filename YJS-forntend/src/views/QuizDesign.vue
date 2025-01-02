@@ -51,16 +51,64 @@
     <div class="section">
       <h3>選擇題</h3>
       <div class="quiz-list">
-        <div
-          v-for="(quizItem, index) in choiceQuizzes"
-          :key="index"
-          class="quiz-item">
-          <p><strong>題目：</strong> {{ quizItem.name }}</p>
-          <ul class="options">
-            <li v-for="(option, optIndex) in quizItem.options" :key="optIndex">
-              {{ optIndex + 1 }} {{ option }}
-            </li>
-          </ul>
+        <div v-if="router_name === 'quiz-design-review'">
+          <div
+            v-for="(quizItem, index) in choiceQuizzes"
+            :key="index"
+            class="quiz-item">
+            <div class="review-section">
+              <label>
+                <input
+                  type="radio"
+                  :name="'status-' + index"
+                  value="通過/採用"
+                  v-model="quizItem.status"
+                  :aria-checked="quizItem.status === '通過/採用'"
+                  @change="updateStatus(quizItem)" />
+                通過/採用
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  :name="'status-' + index"
+                  value="通過/保留"
+                  v-model="quizItem.status"
+                  :aria-checked="quizItem.status === '通過/保留'"
+                  @change="updateStatus(quizItem)" />
+                通過/保留
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  :name="'status-' + index"
+                  value="不通過"
+                  v-model="quizItem.status"
+                  :aria-checked="quizItem.status === '不通過'" />
+                不通過
+              </label>
+              <div v-if="quizItem.status === '不通過'">
+                <label>原因：</label>
+              </div>
+              <div v-if="quizItem.status === '不通過'">
+                <input
+                  type="text"
+                  v-model="quizItem.reason"
+                  placeholder="輸入完按 Enter 鍵保存"
+                  required
+                  @change="updateStatus(quizItem)" />
+              </div>
+            </div>
+
+            <p><strong>題目：</strong> {{ quizItem.name }}</p>
+            <ul class="options">
+              <li
+                v-for="(option, optIndex) in quizItem.options"
+                :key="optIndex">
+                <input type="radio" v-model="quizItem.reason" />
+                {{ option }}
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
       <div class="new-quiz">
@@ -97,6 +145,7 @@
 
     <div class="section">
       <h3>問答題</h3>
+      <div v-if="router_name === 'quiz-design-review'"></div>
       <div class="quiz-list">
         <div
           v-for="(quizItem, index) in questionQuizzes"
@@ -131,9 +180,12 @@
 <script setup>
   import { ref } from "vue";
   import axios from "axios";
+  import { useRouter } from "vue-router";
   import BaseButton from "@/components/Button/BaseButton.vue";
   import RightSideBar from "@/components/RightSideBar.vue";
 
+  const router = useRouter();
+  const router_name = router.currentRoute.value.name;
   // 表單數據
   const quiz = ref({
     sop: "",
@@ -273,6 +325,26 @@
       );
     } catch (error) {
       console.error("無法加載 Quiz 資料：", error);
+    }
+  };
+
+  const updateStatus = async (quizItem) => {
+    console.log("Selected status:", quizItem.status);
+
+    try {
+      if (quizItem.status === "不通過" && !quizItem.reason) {
+        alert("請輸入原因！");
+        return;
+      }
+      await axios.put(`/api/quiz/${quizItem.id}`, {
+        options: quizItem.options,
+        status: quizItem.status,
+        reason: quizItem.reason || null,
+      });
+      alert("狀態更新成功！");
+    } catch (error) {
+      console.error("狀態更新失敗：", error);
+      alert("更新失敗，請稍後再試！");
     }
   };
 </script>
@@ -421,18 +493,6 @@
     display: flex;
     list-style-type: none;
   }
-  .quiz-design .quiz-item ul li::before {
-    content: "";
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    width: 12px;
-    height: 12px;
-    left: 10px;
-    background-image: url("@/assets/dot.png");
-    background-size: cover;
-    transform: translateY(-50%);
-  }
 
   .new-quiz {
     margin-bottom: 20px;
@@ -480,5 +540,27 @@
     background-color: #28a745;
     color: white;
     margin-top: 10px;
+  }
+
+  .review-section {
+    display: flex;
+    margin: 20px 0;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+
+  .review-section label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+
+  .review-section input[type="text"] {
+    max-width: 400px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
   }
 </style>
